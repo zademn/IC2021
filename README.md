@@ -29,4 +29,9 @@ In functie de ce tip de notificari are nevoie, user-ul are posibilitatea sa inte
 
 _temporary architecture_
 
-![](./architecture.png)
+![](./images/architecture.png)
+
+# Design
+
+![](images/main_page.png)
+![](images/logged_in.png)
