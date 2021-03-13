@@ -3,6 +3,8 @@ from tortoise.contrib.pydantic import pydantic_model_creator
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
+from uuid import uuid4
+
 # the jwt token
 
 
@@ -30,6 +32,7 @@ class Users(models.Model):
     """
 
     id = fields.IntField(pk=True)
+    uuid = fields.UUIDField(default=uuid4)
     email = fields.CharField(max_length=128, unique=True)
     password_hash = fields.CharField(max_length=192, null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -45,8 +48,8 @@ class Users(models.Model):
 
     class PydanticMeta:
         # computed = ["full_name"]
-        exclude = ["password_hash"]
+        exclude = ["password_hash", "uuid"]
 
 
 User_Pydantic = pydantic_model_creator(
-    Users, name="User", exclude=('created_at', 'modified_at'))
+    Users, name="User", exclude=('created_at', 'modified_at', 'uuid'))

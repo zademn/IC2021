@@ -34,10 +34,7 @@ async def register_user(user: UserIn):
     # Create the user in the database
     user_obj = await Users.create(**user)
 
-    return HTTPException(
-        status_code=status.HTTP_200_OK,
-        detail="User created"
-    )
+    return {"detail": "User created"}
 
 
 @app.post("/token", response_model=Token)
