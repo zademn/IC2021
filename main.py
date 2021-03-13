@@ -9,6 +9,7 @@ from fastapi import (
     Depends
 )
 import mail_settings
+from mail import simple_send
 
 from starlette.responses import JSONResponse
 from starlette.requests import Request
@@ -121,20 +122,11 @@ html = """
 
 
 @app.post("/email")
-async def simple_send(
+async def send_email(
     email: EmailSchema
 ) -> JSONResponse:
 
-    message = MessageSchema(
-        subject="Custom subject",
-        # List of recipients, as many as you can pass
-        recipients=email.dict().get("email"),
-        body=email.dict().get("content"),
-        subtype="html"
-    )
-
-    fm = FastMail(conf)
-    await fm.send_message(message)
+    await simple_send(email.dict().get('email'), email.dict().get('content'))
     return JSONResponse(status_code=200, content={"message": "email has been sent"})
 
 # Register the ORM
