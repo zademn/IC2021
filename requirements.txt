@@ -8,3 +8,5 @@ websockets==8.1
 tortoise-orm[aiosqlite]
 pytest
 email-validator
+python-jose[cryptography]
+python-dotenv
