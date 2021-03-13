@@ -60,3 +60,4 @@ User_Pydantic = pydantic_model_creator(
 
 class EmailSchema(BaseModel):
     email: List[EmailStr]
+    content: str
