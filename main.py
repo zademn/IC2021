@@ -1,8 +1,26 @@
 from typing import List, Optional
 
+from fastapi import (
+    BackgroundTasks,
+    UploadFile, File,
+    Form,
+    Query,
+    Body,
+    Depends
+)
+import mail_settings
+from mail import simple_send
+
+from starlette.responses import JSONResponse
+from starlette.requests import Request
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
+from pydantic import EmailStr, BaseModel
+from typing import List
+from fastapi_mail.email_utils import DefaultChecker
+
 from fastapi import FastAPI, HTTPException, Response, status, Depends, Header
 from fastapi.security import OAuth2PasswordRequestForm
-from models import User_Pydantic, Users, Status, UserIn, Token
+from models import User_Pydantic, Users, Status, UserIn, Token, EmailSchema
 from crypto import valid_password, hash_password, verify_password
 from crypto import create_access_token, get_current_active_user
 
@@ -83,6 +101,33 @@ async def get_users():
 @app.get("/")
 async def root():
     return Response(content="OK", media_type="text/plain")
+
+
+conf = ConnectionConfig(
+    MAIL_USERNAME=mail_settings.MAIL_USERNAME,
+    MAIL_PASSWORD=mail_settings.MAIL_PASSWORD,
+    MAIL_FROM=mail_settings.MAIL_FROM,
+    MAIL_PORT=mail_settings.MAIL_PORT,
+    MAIL_SERVER=mail_settings.MAIL_SERVER,
+    MAIL_FROM_NAME=mail_settings.MAIL_FROM_NAME,
+    MAIL_TLS=True,
+    MAIL_SSL=False,
+    #USER_CREDENTIALS = True,
+)
+
+
+html = """
+<p>merge?</p> 
+"""
+
+
+@app.post("/email")
+async def send_email(
+    email: EmailSchema
+) -> JSONResponse:
+
+    await simple_send(email.dict().get('email'), email.dict().get('content'))
+    return JSONResponse(status_code=200, content={"message": "email has been sent"})
 
 # Register the ORM
 register_tortoise(

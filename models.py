@@ -1,9 +1,12 @@
 from tortoise import fields, models
 from tortoise.contrib.pydantic import pydantic_model_creator
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
 
 from uuid import uuid4
+
+from fastapi_mail import FastMail, MessageSchema,ConnectionConfig
+from fastapi_mail.email_utils import DefaultChecker
 
 # the jwt token
 
@@ -53,3 +56,8 @@ class Users(models.Model):
 
 User_Pydantic = pydantic_model_creator(
     Users, name="User", exclude=('created_at', 'modified_at', 'uuid'))
+
+
+class EmailSchema(BaseModel):
+    email: List[EmailStr]
+    content: str
