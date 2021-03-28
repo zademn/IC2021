@@ -1,5 +1,6 @@
 import Header from "../components/header";
 import { Box, Button, Text, Center } from "@chakra-ui/react";
+import Link from "next/link";
 export default function Home() {
   return (
     <Box>
@@ -25,14 +26,16 @@ export default function Home() {
       </Box>
       <Box>
         <Center>
-          <Button
-            colorScheme="teal"
-            size="lg"
-            fontWeight="semibold"
-            width="200px"
-          >
-            <Text fontSize="2xl">Get started →</Text>
-          </Button>
+          <Link href="/register">
+            <Button
+              colorScheme="teal"
+              size="lg"
+              fontWeight="semibold"
+              width="200px"
+            >
+              <Text fontSize="2xl">Get started →</Text>
+            </Button>
+          </Link>
         </Center>
       </Box>
     </Box>

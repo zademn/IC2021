@@ -33,8 +33,10 @@ origins = [
     "http://localhost",
     "https://localhost",
     "http://localhost",
+    "http://localhost:3000",
     "http://localhost:8000",
     "http://127.0.0.1:8000"
+    "http://127.0.0.1:3000"
 ]
 
 app.add_middleware(
@@ -53,7 +55,7 @@ async def register_user(user: UserIn):
     takes a user_in model which is just {"email": ..., "password": ...}
     """
     if not valid_password(user.password):
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Password must have uppercase and lowercase letter,be at least 8 characters long and contain at least a symbol",
         )

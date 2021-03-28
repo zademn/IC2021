@@ -17,6 +17,7 @@ import {
   AlertTitle,
   AlertDescription,
 } from "@chakra-ui/react";
+import axios from "axios";
 import { useState } from "react";
 
 function DisplayAlert({ status, title, description }) {
@@ -70,16 +71,28 @@ export default function Register() {
       }, 3000);
       return;
     }
-    fetch(`${process.env.backend}/register`, {
-      method: "POST",
-      body: { email: email, password: password },
-    })
-      .then((response) => response.json())
-      .then((result) => {
-        console.log("Success:", result);
+    axios
+      .post(`${process.env.backend}/register`, {
+        email: email,
+        password: password,
       })
-      .catch((error) => {
-        console.error("Error:", error);
+      .then((res) =>
+        setAlert(
+          <DisplayAlert
+            title="Register"
+            description={res.data.detail}
+            status="success"
+          />
+        )
+      )
+      .catch((err) => {
+        setAlert(
+          <DisplayAlert
+            title="Error"
+            description="Try a different username or password"
+            status="error"
+          />
+        );
       });
   }
 
