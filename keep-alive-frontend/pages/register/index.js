@@ -6,6 +6,7 @@ import {
   InputRightElement,
   Button,
   FormHelperText,
+  Text,
   CloseButton,
   Box,
   Flex,
@@ -56,7 +57,6 @@ export default function Register() {
   }
 
   function handleSubmit() {
-    console.log(email, password, confirmPassword);
     if (confirmPassword !== password) {
       setAlert(
         <DisplayAlert
@@ -68,7 +68,19 @@ export default function Register() {
       setTimeout(() => {
         setAlert(null);
       }, 3000);
+      return;
     }
+    fetch(`${process.env.backend}/register`, {
+      method: "POST",
+      body: { email: email, password: password },
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        console.log("Success:", result);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
   }
 
   return (
@@ -99,7 +111,6 @@ export default function Register() {
           8 characters long
         </FormHelperText>
       </FormControl>
-
       <FormControl id="confirm-password" isRequired>
         <FormLabel fontSize="lg">Confirm password</FormLabel>
         <InputGroup size="md">
@@ -125,7 +136,6 @@ export default function Register() {
           Log in
         </Button>
       </Flex>
-
       {alert}
     </Box>
   );

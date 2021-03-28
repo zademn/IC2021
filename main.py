@@ -8,6 +8,7 @@ from fastapi import (
     Body,
     Depends
 )
+from fastapi.middleware.cors import CORSMiddleware
 from mail import simple_send, conf
 
 from starlette.responses import JSONResponse
@@ -27,6 +28,22 @@ from crypto import create_access_token, get_current_active_user
 from tortoise.contrib.fastapi import HTTPNotFoundError, register_tortoise
 
 app = FastAPI(title="Tortoise ORM FastAPI example")
+
+origins = [
+    "http://localhost",
+    "https://localhost",
+    "http://localhost",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.post("/register")
