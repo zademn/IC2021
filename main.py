@@ -8,8 +8,8 @@ from fastapi import (
     Body,
     Depends
 )
-import mail_settings
-from mail import simple_send
+from fastapi.middleware.cors import CORSMiddleware
+from mail import simple_send, conf
 
 from starlette.responses import JSONResponse
 from starlette.requests import Request
@@ -29,6 +29,24 @@ from tortoise.contrib.fastapi import HTTPNotFoundError, register_tortoise
 
 app = FastAPI(title="Tortoise ORM FastAPI example")
 
+origins = [
+    "http://localhost",
+    "https://localhost",
+    "http://localhost",
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000"
+    "http://127.0.0.1:3000"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.post("/register")
 async def register_user(user: UserIn):
@@ -37,7 +55,7 @@ async def register_user(user: UserIn):
     takes a user_in model which is just {"email": ..., "password": ...}
     """
     if not valid_password(user.password):
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Password must have uppercase and lowercase letter,be at least 8 characters long and contain at least a symbol",
         )
@@ -101,19 +119,6 @@ async def get_users():
 @app.get("/")
 async def root():
     return Response(content="OK", media_type="text/plain")
-
-
-conf = ConnectionConfig(
-    MAIL_USERNAME=mail_settings.MAIL_USERNAME,
-    MAIL_PASSWORD=mail_settings.MAIL_PASSWORD,
-    MAIL_FROM=mail_settings.MAIL_FROM,
-    MAIL_PORT=mail_settings.MAIL_PORT,
-    MAIL_SERVER=mail_settings.MAIL_SERVER,
-    MAIL_FROM_NAME=mail_settings.MAIL_FROM_NAME,
-    MAIL_TLS=True,
-    MAIL_SSL=False,
-    #USER_CREDENTIALS = True,
-)
 
 
 html = """
