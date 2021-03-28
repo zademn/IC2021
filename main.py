@@ -8,8 +8,7 @@ from fastapi import (
     Body,
     Depends
 )
-import mail_settings
-from mail import simple_send
+from mail import simple_send, conf
 
 from starlette.responses import JSONResponse
 from starlette.requests import Request
@@ -101,19 +100,6 @@ async def get_users():
 @app.get("/")
 async def root():
     return Response(content="OK", media_type="text/plain")
-
-
-conf = ConnectionConfig(
-    MAIL_USERNAME=mail_settings.MAIL_USERNAME,
-    MAIL_PASSWORD=mail_settings.MAIL_PASSWORD,
-    MAIL_FROM=mail_settings.MAIL_FROM,
-    MAIL_PORT=mail_settings.MAIL_PORT,
-    MAIL_SERVER=mail_settings.MAIL_SERVER,
-    MAIL_FROM_NAME=mail_settings.MAIL_FROM_NAME,
-    MAIL_TLS=True,
-    MAIL_SSL=False,
-    #USER_CREDENTIALS = True,
-)
 
 
 html = """
