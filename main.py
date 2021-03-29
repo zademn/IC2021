@@ -54,12 +54,14 @@ async def register_user(user: UserIn):
     Registers a user,
     takes a user_in model which is just {"email": ..., "password": ...}
     """
+    print(user.password)
     if not valid_password(user.password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must have uppercase and lowercase letter,be at least 8 characters long and contain at least a symbol",
+            detail="Password must have uppercase and lowercase letter,be at least 8 characters long and contain at least a number and an uppercase character",
         )
 
+    print("if failed")
     user = user.dict()
 
     # hash the user's password
