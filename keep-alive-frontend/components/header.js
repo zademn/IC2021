@@ -2,14 +2,13 @@ import { Box, Flex, Text, Image, Button } from "@chakra-ui/react";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useLocalStorage } from "../hooks/useLocalStorage";
+import { useCookies } from "react-cookie";
 
 export default function Header({ name = "Welcome", logout = false }) {
-  const [token, setToken] = useLocalStorage(null, "token");
   const router = useRouter();
-
+  const [cookies, setCookie, removeCookie] = useCookies(["token"]);
   function handleLogout() {
-    setToken(null);
+    removeCookie("token");
   }
 
   return (

@@ -1,12 +1,15 @@
 import { ChakraProvider } from "@chakra-ui/react";
 import { Provider } from "../context";
+import { CookiesProvider } from "react-cookie";
 function MyApp({ Component, pageProps }) {
   return (
-    <Provider>
-      <ChakraProvider>
-        <Component {...pageProps} />
-      </ChakraProvider>
-    </Provider>
+    <CookiesProvider>
+      <Provider>
+        <ChakraProvider>
+          <Component {...pageProps} />
+        </ChakraProvider>
+      </Provider>
+    </CookiesProvider>
   );
 }
 

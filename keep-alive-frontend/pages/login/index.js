@@ -21,7 +21,7 @@ import Header from "../../components/header";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { Context } from "../../context";
-import { useLocalStorage } from "../../hooks/useLocalStorage";
+import { useCookies } from "react-cookie";
 
 function DisplayAlert({ status, title, description }) {
   return (
@@ -44,10 +44,10 @@ export default function Login() {
 
   const [alert, setAlert] = useState(null);
 
+  const [cookie, setCookie] = useCookies(["token"]);
+
   // Context for keeping the username in mind
   const { state, dispatch } = useContext(Context);
-
-  const [token, setToken] = useLocalStorage(null, "token");
 
   const router = useRouter();
 
@@ -82,7 +82,11 @@ export default function Login() {
             status="success"
           />
         );
-        setToken(`Bearer ${res.data.access_token}`);
+        setCookie("token", `Bearer ${res.data.access_token}`, {
+          path: "/",
+          maxAge: 3600, // Expires after 1hr
+          sameSite: true,
+        });
         dispatch({
           type: "LOGGED_IN_USER",
           payload: email,
