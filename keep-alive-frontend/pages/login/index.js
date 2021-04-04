@@ -19,6 +19,7 @@ import axios from "axios";
 import { useState, useContext } from "react";
 import Header from "../../components/header";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { Context } from "../../context";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 
@@ -47,6 +48,8 @@ export default function Login() {
   const { state, dispatch } = useContext(Context);
 
   const [token, setToken] = useLocalStorage(null, "token");
+
+  const router = useRouter();
 
   function handlePass(e) {
     setPassword(e.target.value);
@@ -84,6 +87,7 @@ export default function Login() {
           type: "LOGGED_IN_USER",
           payload: email,
         });
+        router.push("/dashboard");
       })
       .catch((err) => {
         setAlert(
@@ -135,13 +139,7 @@ export default function Login() {
             Submit
           </Button>
           <Link href="/register" passHref>
-            <Button
-              as="a"
-              mt={4}
-              colorScheme="teal"
-              type="submit"
-              variant="link"
-            >
+            <Button mt={4} colorScheme="teal" type="submit" variant="link">
               Register
             </Button>
           </Link>

@@ -155,13 +155,7 @@ export default function Register() {
             Submit
           </Button>
           <Link href="/login" passHref>
-            <Button
-              as="a"
-              mt={4}
-              colorScheme="teal"
-              type="submit"
-              variant="link"
-            >
+            <Button mt={4} colorScheme="teal" type="submit" variant="link">
               Log in
             </Button>
           </Link>

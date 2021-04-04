@@ -1,7 +1,17 @@
 import { Box, Flex, Text, Image, Button } from "@chakra-ui/react";
 import Head from "next/head";
 import Link from "next/link";
-export default function Header({ name = "Welcome" }) {
+import { useRouter } from "next/router";
+import { useLocalStorage } from "../hooks/useLocalStorage";
+
+export default function Header({ name = "Welcome", logout = false }) {
+  const [token, setToken] = useLocalStorage(null, "token");
+  const router = useRouter();
+
+  function handleLogout() {
+    setToken(null);
+  }
+
   return (
     <Box as="header">
       <Head>
@@ -36,17 +46,30 @@ export default function Header({ name = "Welcome" }) {
             </Text>
           </Flex>
           <Flex>
-            <Link href="/login" passHref>
-              <Button
-                as="a"
-                colorScheme="cyan"
-                size="lg"
-                fontWeight="semibold"
-                width="150px"
-              >
-                Log in
-              </Button>
-            </Link>
+            {!logout ? (
+              <Link href="/login" passHref>
+                <Button
+                  colorScheme="cyan"
+                  size="lg"
+                  fontWeight="semibold"
+                  width="150px"
+                >
+                  Log in
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/" passHref>
+                <Button
+                  colorScheme="cyan"
+                  size="lg"
+                  fontWeight="semibold"
+                  width="150px"
+                  onClick={handleLogout}
+                >
+                  Log out
+                </Button>
+              </Link>
+            )}
           </Flex>
         </Flex>
       </Link>
