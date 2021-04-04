@@ -1,10 +1,12 @@
 import { ChakraProvider } from "@chakra-ui/react";
-
+import { Provider } from "../context";
 function MyApp({ Component, pageProps }) {
   return (
-    <ChakraProvider>
-      <Component {...pageProps} />
-    </ChakraProvider>
+    <Provider>
+      <ChakraProvider>
+        <Component {...pageProps} />
+      </ChakraProvider>
+    </Provider>
   );
 }
 

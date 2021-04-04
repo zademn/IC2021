@@ -16,9 +16,11 @@ import {
   AlertDescription,
 } from "@chakra-ui/react";
 import axios from "axios";
-import { useState } from "react";
+import { useState, useContext } from "react";
 import Header from "../../components/header";
 import Link from "next/link";
+import { Context } from "../../context";
+import { useLocalStorage } from "../../hooks/useLocalStorage";
 
 function DisplayAlert({ status, title, description }) {
   return (
@@ -40,6 +42,11 @@ export default function Login() {
   const [password, setPassword] = useState("");
 
   const [alert, setAlert] = useState(null);
+
+  // Context for keeping the username in mind
+  const { state, dispatch } = useContext(Context);
+
+  const [token, setToken] = useLocalStorage(null, "token");
 
   function handlePass(e) {
     setPassword(e.target.value);
@@ -65,7 +72,6 @@ export default function Login() {
         },
       })
       .then((res) => {
-        console.log(res.data);
         setAlert(
           <DisplayAlert
             title="Login"
@@ -73,6 +79,11 @@ export default function Login() {
             status="success"
           />
         );
+        setToken(`Bearer ${res.data.access_token}`);
+        dispatch({
+          type: "LOGGED_IN_USER",
+          payload: email,
+        });
       })
       .catch((err) => {
         setAlert(
