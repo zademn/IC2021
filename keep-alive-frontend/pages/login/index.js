@@ -6,8 +6,6 @@ import {
   InputRightElement,
   Button,
   FormHelperText,
-  Text,
-  CloseButton,
   Box,
   Flex,
 } from "@chakra-ui/react";
@@ -34,16 +32,12 @@ function DisplayAlert({ status, title, description }) {
   );
 }
 
-export default function Register() {
+export default function Login() {
   const [show1, setshow1] = useState(false);
   const handleClick1 = () => setshow1(!show1);
 
-  const [show2, setshow2] = useState(false);
-  const handleClick2 = () => setshow2(!show2);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [alert, setAlert] = useState(null);
 
@@ -51,56 +45,48 @@ export default function Register() {
     setPassword(e.target.value);
   }
 
-  function handleConfirmPass(e) {
-    setConfirmPassword(e.target.value);
-  }
-
   function handleEmail(e) {
     setEmail(e.target.value);
   }
 
   function handleSubmit() {
-    if (confirmPassword !== password) {
-      setAlert(
-        <DisplayAlert
-          title="Password Error"
-          description="Password and confirm password don't match"
-          status="error"
-        />
-      );
-      setTimeout(() => {
-        setAlert(null);
-      }, 3000);
-      return;
-    }
+    const params = new URLSearchParams();
+    params.append("username", email);
+    params.append("password", password);
+    params.append("grant_type", "");
+    params.append("scope", "");
+    params.append("client_id", "");
+    params.append("client_secret", "");
+
     axios
-      .post(`${process.env.backend}/register`, {
-        email: email,
-        password: password,
+      .post(`${process.env.backend}/token`, params, {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
       })
-      .then((res) =>
+      .then((res) => {
+        console.log(res.data);
         setAlert(
           <DisplayAlert
-            title="Register"
-            description={res.data.detail}
+            title="Login"
+            description="Succesfully logged in!"
             status="success"
           />
-        )
-      )
+        );
+      })
       .catch((err) => {
         setAlert(
           <DisplayAlert
             title="Error"
-            description="Try a different username or password"
+            description="Incorrect username or password."
             status="error"
           />
         );
       });
   }
-
   return (
     <Box>
-      <Header name="Register" />
+      <Header name="Login" />
       <Box w={["90%", "50%"]} mx="auto" mt="10%">
         <FormControl id="email" isRequired>
           <FormLabel fontSize="lg">Email address</FormLabel>
@@ -128,23 +114,6 @@ export default function Register() {
             least 8 characters long
           </FormHelperText>
         </FormControl>
-        <FormControl id="confirm-password" isRequired>
-          <FormLabel fontSize="lg">Confirm password</FormLabel>
-          <InputGroup size="md">
-            <Input
-              pr="4.5rem"
-              type={show2 ? "text" : "password"}
-              placeholder="Confirm password"
-              value={confirmPassword}
-              onChange={handleConfirmPass}
-            />
-            <InputRightElement width="4.5rem">
-              <Button h="1.75rem" size="sm" onClick={handleClick2}>
-                {show2 ? "Hide" : "Show"}
-              </Button>
-            </InputRightElement>
-          </InputGroup>
-        </FormControl>
         <Flex alignItems="center" justifyContent="space-between">
           <Button
             mt={4}
@@ -154,7 +123,7 @@ export default function Register() {
           >
             Submit
           </Button>
-          <Link href="/login" passHref>
+          <Link href="/register" passHref>
             <Button
               as="a"
               mt={4}
@@ -162,7 +131,7 @@ export default function Register() {
               type="submit"
               variant="link"
             >
-              Log in
+              Register
             </Button>
           </Link>
         </Flex>

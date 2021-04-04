@@ -36,14 +36,17 @@ export default function Header({ name = "Welcome" }) {
             </Text>
           </Flex>
           <Flex>
-            <Button
-              colorScheme="cyan"
-              size="lg"
-              fontWeight="semibold"
-              width="150px"
-            >
-              Log in
-            </Button>
+            <Link href="/login" passHref>
+              <Button
+                as="a"
+                colorScheme="cyan"
+                size="lg"
+                fontWeight="semibold"
+                width="150px"
+              >
+                Log in
+              </Button>
+            </Link>
           </Flex>
         </Flex>
       </Link>
