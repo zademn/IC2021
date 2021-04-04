@@ -23,6 +23,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from models import User_Pydantic, Users, Status, UserIn, Token, EmailSchema
 from crypto import valid_password, hash_password, verify_password
 from crypto import create_access_token, get_current_active_user
+import time
 
 
 from tortoise.contrib.fastapi import HTTPNotFoundError, register_tortoise
@@ -114,6 +115,13 @@ async def read_users_mode(current_user: User_Pydantic = Depends(get_current_acti
 @app.get("/users", response_model=List[User_Pydantic])
 async def get_users():
     return await User_Pydantic.from_queryset(Users.all())
+
+# get current time
+
+
+@app.get("/unixtime")
+async def get_unix_time():
+    return {"time": int(time.time())}
 
 
 @app.get("/")
