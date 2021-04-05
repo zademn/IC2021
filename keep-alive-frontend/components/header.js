@@ -1,7 +1,16 @@
 import { Box, Flex, Text, Image, Button } from "@chakra-ui/react";
 import Head from "next/head";
 import Link from "next/link";
-export default function Header({ name = "Welcome" }) {
+import { useRouter } from "next/router";
+import { useCookies } from "react-cookie";
+
+export default function Header({ name = "Welcome", logout = false }) {
+  const router = useRouter();
+  const [cookies, setCookie, removeCookie] = useCookies(["token"]);
+  function handleLogout() {
+    removeCookie("token");
+  }
+
   return (
     <Box as="header">
       <Head>
@@ -36,14 +45,30 @@ export default function Header({ name = "Welcome" }) {
             </Text>
           </Flex>
           <Flex>
-            <Button
-              colorScheme="cyan"
-              size="lg"
-              fontWeight="semibold"
-              width="150px"
-            >
-              Log in
-            </Button>
+            {!logout ? (
+              <Link href="/login" passHref>
+                <Button
+                  colorScheme="cyan"
+                  size="lg"
+                  fontWeight="semibold"
+                  width="150px"
+                >
+                  Log in
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/" passHref>
+                <Button
+                  colorScheme="cyan"
+                  size="lg"
+                  fontWeight="semibold"
+                  width="150px"
+                  onClick={handleLogout}
+                >
+                  Log out
+                </Button>
+              </Link>
+            )}
           </Flex>
         </Flex>
       </Link>

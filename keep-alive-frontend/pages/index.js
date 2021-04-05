@@ -1,7 +1,12 @@
 import Header from "../components/header";
 import { Box, Button, Text, Center } from "@chakra-ui/react";
 import Link from "next/link";
+import { Context } from "../context";
+
+import { useContext } from "react";
+
 export default function Home() {
+  const { state, dispatch } = useContext(Context);
   return (
     <Box>
       <Header name="Keep Alive" />
