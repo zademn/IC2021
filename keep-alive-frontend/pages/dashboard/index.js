@@ -1,10 +1,12 @@
 import Header from "../../components/header";
+import ModalNewApp from "../../components/modalNewApp.js"
 import { Box, Button, Text, Center } from "@chakra-ui/react";
 import Link from "next/link";
 import { Context } from "../../context";
 import { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { useCookies } from "react-cookie";
+
 
 function getExpiryDateToken(token) {
   // Split token at .
@@ -88,6 +90,7 @@ export default function Dashboard() {
       <Header name="Dashboard" logout />
       <br />
       {state.user}
+      <ModalNewApp></ModalNewApp>
     </Box>
   );
 }
