@@ -26,7 +26,7 @@ export default function ModalNewApp() {
   
     return (
       <>
-        <Button onClick={onOpen}>Open Modal</Button>
+        <Button onClick={onOpen}>New App</Button>
         <Modal
           isOpen={isOpen}
           onClose={onClose}
