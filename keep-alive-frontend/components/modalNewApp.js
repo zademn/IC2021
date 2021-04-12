@@ -17,6 +17,7 @@ import {
 import { Input } from "@chakra-ui/react"
 import { Button } from "@chakra-ui/react"
 import { useDisclosure } from "@chakra-ui/react"
+import { Select } from "@chakra-ui/react"
 import {useRef} from 'react'
 
 export default function ModalNewApp() {
@@ -43,8 +44,13 @@ export default function ModalNewApp() {
   
               <FormControl mt={4}>
                 <FormLabel></FormLabel>
-                <Input placeholder="Last name" />
+                <Input placeholder="App Type" />
               </FormControl>
+              <Select placeholder="Select option" mt={4}>
+                <option value="option1">Health Check</option>
+                <option value="option2">Monitoring</option>
+                <option value="option3">Logging</option>
+              </Select>
             </ModalBody>
   
             <ModalFooter>
