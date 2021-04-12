@@ -108,7 +108,7 @@ Monitoring_Pydantic = pydantic_model_creator(
 class Logger(models.Model):
     id = fields.IntField(pk=True)
     monitoring: fields.OneToOneRelation[Monitoring] = fields.OneToOneField(
-        Monitoring)
+        "models.Monitoring")
     data = fields.CharField(max_length=1024)
 
 
