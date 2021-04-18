@@ -54,11 +54,12 @@ export default function ModalNewApp() {
   const changeAppType = (event) => {
     setAppType(event.target.value);
   };
-  console.log(appType);
 
   return (
     <>
-      <Button onClick={onOpen}>New App</Button>
+      <Button width="40%" onClick={onOpen} size="lg">
+        New App
+      </Button>
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
         <ModalContent>
