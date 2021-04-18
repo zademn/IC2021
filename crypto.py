@@ -9,7 +9,7 @@ from typing import Optional
 from datetime import datetime, timedelta
 
 from fastapi import Depends, FastAPI, HTTPException, status
-from models import Token, TokenData, User_Pydantic, User_Pydantic, Users
+from models import Token, TokenData, User_Pydantic, User_Pydantic, User
 from fastapi.security import OAuth2PasswordBearer
 
 load_dotenv()
@@ -50,7 +50,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise credentials_exception
 
-    user = await User_Pydantic.from_queryset_single(Users.get(email=email))
+    user = await User_Pydantic.from_queryset_single(User.get(email=email))
     if user is None:
         raise credentials_exception
     return user

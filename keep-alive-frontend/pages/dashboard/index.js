@@ -1,10 +1,13 @@
 import Header from "../../components/header";
+import ModalNewApp from "../../components/modalNewApp.js";
 import { Box, Button, Text, Center } from "@chakra-ui/react";
 import Link from "next/link";
 import { Context } from "../../context";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useCookies } from "react-cookie";
+import { StackDivider, VStack } from "@chakra-ui/react";
+import { Select, ButtonGroup } from "@chakra-ui/react";
 
 function getExpiryDateToken(token) {
   // Split token at .
@@ -31,6 +34,7 @@ export default function Dashboard() {
   const [cookie, setCookie] = useCookies(["token"]);
   const { state, dispatch } = useContext(Context);
   const [srvTime, setSrvTime] = useState(-1);
+  const [selectValue, setSelectValue] = useState("");
 
   useEffect(() => {
     axios
@@ -45,6 +49,10 @@ export default function Dashboard() {
       payload: getUserEmail(cookie.token),
     });
   }, []);
+
+  function handleSelectChange(e) {
+    setSelectValue(e.target.value);
+  }
 
   if (
     getExpiryDateToken(cookie.token) == -1 ||
@@ -87,7 +95,35 @@ export default function Dashboard() {
     <Box>
       <Header name="Dashboard" logout />
       <br />
-      {state.user}
+      <VStack
+        divider={<StackDivider borderColor="gray.200" />}
+        spacing={4}
+        align="stretch"
+        m="auto"
+        w="80%"
+      >
+        <Box mt="10">
+          <Text fontWeight="bold" fontSize="2xl">
+            Overview for {state.user}
+          </Text>
+        </Box>
+        <Box h="40px">
+          <ButtonGroup variant="outline" spacing="6" w={["100%", "85%", "60%"]}>
+            <Select
+              placeholder="Choose an application"
+              variant="filled"
+              bg="teal.500"
+              onChange={handleSelectChange}
+              size="lg"
+            >
+              <option value="option1">Option 1</option>
+              <option value="option2">Option 2</option>
+              <option value="option3">Option 3</option>
+            </Select>
+            <ModalNewApp cookieToken={cookie.token} />
+          </ButtonGroup>
+        </Box>
+      </VStack>
     </Box>
   );
 }

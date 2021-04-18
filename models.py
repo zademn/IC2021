@@ -2,10 +2,10 @@ from tortoise import fields, models
 from tortoise.contrib.pydantic import pydantic_model_creator
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
-
+from enum import Enum, IntEnum
 from uuid import uuid4
 
-from fastapi_mail import FastMail, MessageSchema,ConnectionConfig
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 from fastapi_mail.email_utils import DefaultChecker
 
 # the jwt token
@@ -29,7 +29,7 @@ class UserIn(BaseModel):
     password: str
 
 
-class Users(models.Model):
+class User(models.Model):
     """
     The User model
     """
@@ -55,9 +55,73 @@ class Users(models.Model):
 
 
 User_Pydantic = pydantic_model_creator(
-    Users, name="User", exclude=('created_at', 'modified_at', 'uuid'))
+    User, name="User", exclude=('created_at', 'modified_at', 'uuid'))
+
+
+class Cron(models.Model):
+    """
+    Cron model
+    """
+    # Id stuff
+    id = fields.IntField(pk=True)
+    uuid = fields.UUIDField()
+    name = fields.CharField(max_length=128, unique=True)
+    created_at = fields.DatetimeField(auto_now_add=True)
+    modified_at = fields.DatetimeField(auto_now=True)
+    period = fields.CharField(max_length=100, default="* */5 * * *")
+    grace = fields.CharField(max_length=100, default="* */5 * * *")
+
+    # Relations
+    user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+        "models.User")
+
+
+Cron_Pydantic = pydantic_model_creator(
+    Cron, name="Cron", exclude=('created_at', 'modified_at'))
+
+
+class MonitoringService(str, Enum):
+    cpu = 'cpu'
+    memory = 'memory'
+    disk = 'disk'
+
+
+class Monitoring(models.Model):
+    """
+    Monitoring model
+    """
+    id = fields.IntField(pk=True)
+    uuid = fields.UUIDField()
+    name = fields.CharField(max_length=128, unique=True)
+    created_at = fields.DatetimeField(auto_now_add=True)
+    modified_at = fields.DatetimeField(auto_now=True)
+    service = fields.CharEnumField(MonitoringService)
+    user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+        "models.User")
+
+
+Monitoring_Pydantic = pydantic_model_creator(
+    Monitoring, name="Monitoring", exclude=('created_at', 'modified_at'))
+
+
+class Logger(models.Model):
+    id = fields.IntField(pk=True)
+    monitoring: fields.OneToOneRelation[Monitoring] = fields.OneToOneField(
+        "models.Monitoring")
+    data = fields.CharField(max_length=1024)
+
+
+Logger_Pydantic = pydantic_model_creator(
+    Logger, name="Logger", exclude=('created_at', 'modified_at', 'uuid'))
 
 
 class EmailSchema(BaseModel):
     email: List[EmailStr]
     content: str
+
+
+class AppConfig(BaseModel):
+    app_type: str
+    app_name: str
+    period: int
+    grace: int

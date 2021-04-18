@@ -20,9 +20,10 @@ from fastapi_mail.email_utils import DefaultChecker
 
 from fastapi import FastAPI, HTTPException, Response, status, Depends, Header
 from fastapi.security import OAuth2PasswordRequestForm
-from models import User_Pydantic, Users, Status, UserIn, Token, EmailSchema
+from models import User_Pydantic, User, Status, UserIn, Token, EmailSchema, Cron, AppConfig
 from crypto import valid_password, hash_password, verify_password
 from crypto import create_access_token, get_current_active_user
+from uuid import UUID
 import time
 
 
@@ -69,7 +70,7 @@ async def register_user(user: UserIn):
     user.pop("password")
 
     # Create the user in the database
-    user_obj = await Users.create(**user)
+    user_obj = await User.create(**user)
 
     return {"detail": "User created"}
 
@@ -87,7 +88,7 @@ async def get_token(form_data: OAuth2PasswordRequestForm = Depends()):
         headers={"WWW-Authenticate": "Bearer"},
     )
     # checks if the username is in the db
-    user = await Users.get(email=form_data.username).values_list("email", "password_hash")
+    user = await User.get(email=form_data.username).values_list("email", "password_hash")
     if not user:
         raise credentials_exception
     # list of tuples
@@ -114,7 +115,7 @@ async def read_users_mode(current_user: User_Pydantic = Depends(get_current_acti
 # only for testing purposes, to see all the users
 @app.get("/users", response_model=List[User_Pydantic])
 async def get_users():
-    return await User_Pydantic.from_queryset(Users.all())
+    return await User_Pydantic.from_queryset(User.all())
 
 # get current time
 
@@ -122,6 +123,40 @@ async def get_users():
 @app.get("/unixtime")
 async def get_unix_time():
     return {"time": int(time.time())}
+
+
+@app.post("/app/{app_id}")
+async def create_app(app_config: AppConfig, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+    if app_config.app_type == "Health Check":
+
+        period_hours = app_config.period // 60
+        period_minutes = app_config.period % 60
+
+        if period_hours == 0:
+            period_string = f"*/{period_minutes} * * * *"
+        elif period_minutes == 0:
+            period_string = f"* */{period_hours} * * *"
+        else:
+            period_string = f"*/{period_minutes} */{period_hours} * * *"
+
+        grace_hours = app_config.grace // 60
+        grace_minutes = app_config.grace % 60
+
+        if grace_hours == 0:
+            grace_string = f"*/{grace_minutes} * * * *"
+        elif grace_minutes == 0:
+            grace_string = f"* */{grace_hours} * * *"
+        else:
+            grace_string = f"*/{grace_minutes} */{grace_hours} * * *"
+
+        cron_job = await Cron.create(name=app_config.app_name, user=user_obj, uuid=app_id, period=period_string, grace=grace_string)
+
+        raise HTTPException(
+            status_code=status.HTTP_201_CREATED,
+            detail="App created",
+        )
+    return app_config
 
 
 @app.get("/")
