@@ -101,11 +101,11 @@ export default function Dashboard() {
         divider={<StackDivider borderColor="gray.200" />}
         spacing={4}
         align="stretch"
-        w="80%"
         m="auto"
+        w="80%"
       >
         <Box mt="10">
-          <Text fontWeight="bold" fontSize="x-large">
+          <Text fontWeight="bold" fontSize="2xl">
             Overview for {state.user}
           </Text>
         </Box>
