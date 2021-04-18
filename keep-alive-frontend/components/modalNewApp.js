@@ -6,38 +6,49 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
-} from "@chakra-ui/react";
-
-import { FormControl, FormLabel } from "@chakra-ui/react";
-import { Input } from "@chakra-ui/react";
-import { Button } from "@chakra-ui/react";
-import { useDisclosure } from "@chakra-ui/react";
-import {
   Select,
   SliderTrack,
   SliderFilledTrack,
   SliderThumb,
   Slider,
   Box,
+  Flex,
+  Code,
 } from "@chakra-ui/react";
-import { useState } from "react";
+
+import { FormControl, FormLabel } from "@chakra-ui/react";
+import { Input } from "@chakra-ui/react";
+import { Button } from "@chakra-ui/react";
+import { useDisclosure } from "@chakra-ui/react";
+import { Tabs, TabList, TabPanels, Tab, TabPanel } from "@chakra-ui/react";
+import { useState, useEffect } from "react";
+import uuid from "react-uuid";
+import { useClipboard } from "@chakra-ui/react";
 
 export default function ModalNewApp() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [appType, setAppType] = useState("");
   const [period, setPeriod] = useState(5);
   const [gracePeriod, setGracePeriod] = useState(5);
+  const [appURLvalue, setValue] = useState(
+    `${process.env.backend}/app/${uuid()}`
+  );
+  const { hasCopied, onCopy } = useClipboard(appURLvalue);
 
   const changeAppType = (event) => {
     setAppType(event.target.value);
   };
 
+  useEffect(() => {
+    setValue(`${process.env.backend}/app/${uuid()}`);
+  }, [isOpen]);
+
   return (
     <>
-      <Button width="40%" onClick={onOpen} size="lg">
+      <Button width="60%" onClick={onOpen} size="lg">
         New App
       </Button>
-      <Modal isOpen={isOpen} onClose={onClose} size="2xl">
+      <Modal isOpen={isOpen} onClose={onClose} size="4xl">
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Add new application</ModalHeader>
@@ -95,6 +106,121 @@ export default function ModalNewApp() {
                   </SliderTrack>
                   <SliderThumb boxSize={6} />
                 </Slider>
+                <FormLabel>
+                  Keep this check up by making HTTP requests to this url:
+                </FormLabel>
+                <Flex mb={2}>
+                  <Input value={appURLvalue} isReadOnly placeholder="Welcome" />
+                  <Button onClick={onCopy} ml={2}>
+                    {hasCopied ? "Copied" : "Copy"}
+                  </Button>
+                </Flex>
+                <FormLabel>Usage examples:</FormLabel>
+                <Tabs isFitted variant="enclosed" size="md">
+                  <TabList mb="1em">
+                    <Tab>Cron</Tab>
+                    <Tab>Bash</Tab>
+                    <Tab>Python</Tab>
+                    <Tab>Node.js</Tab>
+                    <Tab>Go</Tab>
+                    <Tab>C#</Tab>
+                    <Tab>Browser</Tab>
+                    <Tab>PowerShell</Tab>
+                  </TabList>
+                  <TabPanels>
+                    <TabPanel>
+                      <pre style={{ whiteSpace: "pre-wrap" }}>
+                        {`
+Invoke-RestMethod ${appURLvalue}
+                        `}
+                      </pre>
+                    </TabPanel>
+                    <TabPanel>
+                      <pre style={{ whiteSpace: "pre-wrap" }}>
+                        {`
+# using curl (10 second timeout, retry up to 5 times):{" "}
+curl -m 10 --retry 5 ${appURLvalue} 
+
+# using wget (10 second timeout, retry up to 5 times): 
+wget ${appURLvalue} -T 10 -t 5 -O /dev/null
+                        `}
+                      </pre>
+                    </TabPanel>
+                    <TabPanel>
+                      <pre style={{ whiteSpace: "pre-wrap" }}>
+                        {`
+# Using Python 3 standard library:
+import socket
+import urllib.request
+
+try:
+    urllib.request.urlopen(
+      "${appURLvalue}", 
+      timeout=10)
+except socket.error as e:
+    # Log ping failure here...
+    print("Ping failed: %s" % e)
+                        `}
+                      </pre>
+                    </TabPanel>
+                    <TabPanel>
+                      <pre style={{ whiteSpace: "pre-wrap" }}>
+                        {`
+var https = require('https');
+https.get('${appURLvalue}')
+      .on('error', (err) => {
+          console.log('Ping failed: ' + err)
+});
+                        `}
+                      </pre>
+                    </TabPanel>
+                    <TabPanel>
+                      <pre style={{ whiteSpace: "pre-wrap" }}>
+                        {`
+package main
+import "fmt"
+import "net/http"
+import "time"
+func main() {
+    var client = &http.Client{
+        Timeout: 10 * time.Second,
+    }
+    _, err := client.Head("${appURLvalue}")
+    if err != nil {
+        fmt.Printf("%s", err)
+    }
+}
+                        `}
+                      </pre>
+                    </TabPanel>
+                    <TabPanel>
+                      <pre style={{ whiteSpace: "pre-wrap" }}>
+                        {`
+using (var client = new System.Net.WebClient())
+{
+    client.DownloadString("${appURLvalue}");
+}
+                        `}
+                      </pre>
+                    </TabPanel>
+                    <TabPanel>
+                      <pre style={{ whiteSpace: "pre-wrap" }}>
+                        {`
+var xhr = new XMLHttpRequest();
+xhr.open('GET', '${appURLvalue}', true);
+xhr.send(null);
+                        `}
+                      </pre>
+                    </TabPanel>
+                    <TabPanel>
+                      <pre style={{ whiteSpace: "pre-wrap" }}>
+                        {`
+Invoke-RestMethod ${appURLvalue}
+                        `}
+                      </pre>
+                    </TabPanel>
+                  </TabPanels>
+                </Tabs>
               </FormControl>
             ) : null}
             {appType == "Monitoring" ? (
