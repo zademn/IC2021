@@ -20,9 +20,10 @@ from fastapi_mail.email_utils import DefaultChecker
 
 from fastapi import FastAPI, HTTPException, Response, status, Depends, Header
 from fastapi.security import OAuth2PasswordRequestForm
-from models import User_Pydantic, User, Status, UserIn, Token, EmailSchema
+from models import User_Pydantic, User, Status, UserIn, Token, EmailSchema, Cron
 from crypto import valid_password, hash_password, verify_password
 from crypto import create_access_token, get_current_active_user
+from uuid import UUID
 import time
 
 
@@ -122,6 +123,13 @@ async def get_users():
 @app.get("/unixtime")
 async def get_unix_time():
     return {"time": int(time.time())}
+
+
+@app.post("/app/{app_id}")
+async def create_app(app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+    cron_job = await Cron.create(name="test_app", user=user_obj, uuid=app_id, data="aaaaa")
+    return cron_job
 
 
 @app.get("/")

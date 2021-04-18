@@ -64,13 +64,13 @@ class Cron(models.Model):
     """
     # Id stuff
     id = fields.IntField(pk=True)
-    uuid = fields.UUIDField(default=uuid4)
+    uuid = fields.UUIDField()
     name = fields.CharField(max_length=128, unique=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     modified_at = fields.DatetimeField(auto_now=True)
     # Cron stuff
     data = fields.CharField(max_length=256)
-    schedule = fields.CharField(max_length=100, default="* * * * *")
+    schedule = fields.CharField(max_length=100, default="* */5 * * *")
 
     # Relations
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
@@ -78,7 +78,7 @@ class Cron(models.Model):
 
 
 Cron_Pydantic = pydantic_model_creator(
-    Cron, name="Cron", exclude=('created_at', 'modified_at', 'uuid'))
+    Cron, name="Cron", exclude=('created_at', 'modified_at'))
 
 
 class MonitoringService(str, Enum):
@@ -92,7 +92,7 @@ class Monitoring(models.Model):
     Monitoring model
     """
     id = fields.IntField(pk=True)
-    uuid = fields.UUIDField(default=uuid4)
+    uuid = fields.UUIDField()
     name = fields.CharField(max_length=128, unique=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     modified_at = fields.DatetimeField(auto_now=True)
@@ -102,7 +102,7 @@ class Monitoring(models.Model):
 
 
 Monitoring_Pydantic = pydantic_model_creator(
-    Monitoring, name="Monitoring", exclude=('created_at', 'modified_at', 'uuid'))
+    Monitoring, name="Monitoring", exclude=('created_at', 'modified_at'))
 
 
 class Logger(models.Model):
