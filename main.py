@@ -20,7 +20,7 @@ from fastapi_mail.email_utils import DefaultChecker
 
 from fastapi import FastAPI, HTTPException, Response, status, Depends, Header
 from fastapi.security import OAuth2PasswordRequestForm
-from models import User_Pydantic, User, Status, UserIn, Token, EmailSchema, Cron
+from models import User_Pydantic, User, Status, UserIn, Token, EmailSchema, Cron, AppConfig
 from crypto import valid_password, hash_password, verify_password
 from crypto import create_access_token, get_current_active_user
 from uuid import UUID
@@ -126,10 +126,37 @@ async def get_unix_time():
 
 
 @app.post("/app/{app_id}")
-async def create_app(app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+async def create_app(app_config: AppConfig, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
     user_obj = await User.get(id=current_user.id)
-    cron_job = await Cron.create(name="test_app", user=user_obj, uuid=app_id)
-    return cron_job
+    if app_config.app_type == "Health Check":
+
+        period_hours = app_config.period // 60
+        period_minutes = app_config.period % 60
+
+        if period_hours == 0:
+            period_string = f"*/{period_minutes} * * * *"
+        elif period_minutes == 0:
+            period_string = f"* */{period_hours} * * *"
+        else:
+            period_string = f"*/{period_minutes} */{period_hours} * * *"
+
+        grace_hours = app_config.grace // 60
+        grace_minutes = app_config.grace % 60
+
+        if grace_hours == 0:
+            grace_string = f"*/{grace_minutes} * * * *"
+        elif grace_minutes == 0:
+            grace_string = f"* */{grace_hours} * * *"
+        else:
+            grace_string = f"*/{grace_minutes} */{grace_hours} * * *"
+
+        cron_job = await Cron.create(name=app_config.app_name, user=user_obj, uuid=app_id, period=period_string, grace=grace_string)
+
+        raise HTTPException(
+            status_code=status.HTTP_201_CREATED,
+            detail="App created",
+        )
+    return app_config
 
 
 @app.get("/")

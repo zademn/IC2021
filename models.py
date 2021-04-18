@@ -68,7 +68,8 @@ class Cron(models.Model):
     name = fields.CharField(max_length=128, unique=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     modified_at = fields.DatetimeField(auto_now=True)
-    schedule = fields.CharField(max_length=100, default="* */5 * * *")
+    period = fields.CharField(max_length=100, default="* */5 * * *")
+    grace = fields.CharField(max_length=100, default="* */5 * * *")
 
     # Relations
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
@@ -117,3 +118,10 @@ Logger_Pydantic = pydantic_model_creator(
 class EmailSchema(BaseModel):
     email: List[EmailStr]
     content: str
+
+
+class AppConfig(BaseModel):
+    app_type: str
+    app_name: str
+    period: int
+    grace: int
