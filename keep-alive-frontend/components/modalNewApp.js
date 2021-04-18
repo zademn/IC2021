@@ -29,6 +29,10 @@ export default function ModalNewApp() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [appType, setAppType] = useState("");
   const [period, setPeriod] = useState(5);
+  const periodInHours = {
+    hours: Math.floor(period / 60),
+    minutes: period % 60,
+  };
   const [gracePeriod, setGracePeriod] = useState(5);
   const [appURLvalue, setValue] = useState(
     `${process.env.backend}/app/${uuid()}`
@@ -130,9 +134,12 @@ export default function ModalNewApp() {
                   <TabPanels>
                     <TabPanel>
                       <pre style={{ whiteSpace: "pre-wrap" }}>
-                        {`
-Invoke-RestMethod ${appURLvalue}
-                        `}
+                        {periodInHours.hours === 0
+                          ? `*/${periodInHours.minutes} * * * * /your/command.sh && curl -fsS -m 10 --retry 5 -o /dev/null ${appURLvalue}`
+                          : periodInHours.hours !== 0 &&
+                            periodInHours.minutes === 0
+                          ? `* */${periodInHours.hours} * * * /your/command.sh && curl -fsS -m 10 --retry 5 -o /dev/null ${appURLvalue}`
+                          : `*/${periodInHours.minutes} */${periodInHours.hours} * * * /your/command.sh && curl -fsS -m 10 --retry 5 -o /dev/null ${appURLvalue}`}
                       </pre>
                     </TabPanel>
                     <TabPanel>
