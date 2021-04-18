@@ -128,7 +128,7 @@ async def get_unix_time():
 @app.post("/app/{app_id}")
 async def create_app(app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
     user_obj = await User.get(id=current_user.id)
-    cron_job = await Cron.create(name="test_app", user=user_obj, uuid=app_id, data="aaaaa")
+    cron_job = await Cron.create(name="test_app", user=user_obj, uuid=app_id)
     return cron_job
 
 

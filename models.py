@@ -68,8 +68,6 @@ class Cron(models.Model):
     name = fields.CharField(max_length=128, unique=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     modified_at = fields.DatetimeField(auto_now=True)
-    # Cron stuff
-    data = fields.CharField(max_length=256)
     schedule = fields.CharField(max_length=100, default="* */5 * * *")
 
     # Relations
