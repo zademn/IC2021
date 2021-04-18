@@ -36,8 +36,6 @@ export default function Dashboard() {
   const [srvTime, setSrvTime] = useState(-1);
   const [selectValue, setSelectValue] = useState("");
 
-  console.log(selectValue);
-
   useEffect(() => {
     axios
       .get(`${process.env.backend}/unixtime`)
@@ -122,7 +120,7 @@ export default function Dashboard() {
               <option value="option2">Option 2</option>
               <option value="option3">Option 3</option>
             </Select>
-            <ModalNewApp />
+            <ModalNewApp cookieToken={cookie.token} />
           </ButtonGroup>
         </Box>
       </VStack>

@@ -22,12 +22,14 @@ import { Button } from "@chakra-ui/react";
 import { useDisclosure } from "@chakra-ui/react";
 import { Tabs, TabList, TabPanels, Tab, TabPanel } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
-import uuid from "react-uuid";
+import { v4 as uuidv4 } from "uuid";
 import { useClipboard } from "@chakra-ui/react";
+import axios from "axios";
 
-export default function ModalNewApp() {
+export default function ModalNewApp({ cookieToken }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [appType, setAppType] = useState("");
+  const [appName, setAppName] = useState("My Application");
   const [period, setPeriod] = useState(5);
   const periodInHours = {
     hours: Math.floor(period / 60),
@@ -35,16 +37,51 @@ export default function ModalNewApp() {
   };
   const [gracePeriod, setGracePeriod] = useState(5);
   const [appURLvalue, setValue] = useState(
-    `${process.env.backend}/app/${uuid()}`
+    `${process.env.backend}/app/${uuidv4()}`
   );
+
   const { hasCopied, onCopy } = useClipboard(appURLvalue);
+
+  const [appCreateStatus, setAppCreateStatus] = useState("blue");
 
   const changeAppType = (event) => {
     setAppType(event.target.value);
   };
+  const changeAppName = (event) => {
+    setAppName(event.target.value);
+  };
+  const handleAppCreation = () => {
+    if (appType === "Health Check") {
+      let appConfig = {
+        app_type: appType,
+        app_name: appName,
+        period: period,
+        grace: gracePeriod,
+      };
+      axios
+        .post(appURLvalue, appConfig, {
+          headers: {
+            Authorization: cookieToken,
+          },
+        })
+        .then((res) => {
+          setAppCreateStatus("green");
+          setTimeout(() => {
+            setAppCreateStatus("blue");
+          }, 1000);
+        })
+        .catch((err) => {
+          setAppCreateStatus("red");
+          setTimeout(() => {
+            setAppCreateStatus("blue");
+          }, 1000);
+        });
+    }
+  };
 
   useEffect(() => {
-    setValue(`${process.env.backend}/app/${uuid()}`);
+    setValue(`${process.env.backend}/app/${uuidv4()}`);
+    setAppType("");
   }, [isOpen]);
 
   return (
@@ -60,7 +97,7 @@ export default function ModalNewApp() {
           <ModalBody pb={6}>
             <FormControl>
               <FormLabel>Name </FormLabel>
-              <Input placeholder="Name" />
+              <Input placeholder={appName} onChange={changeAppName} />
             </FormControl>
 
             <Select
@@ -245,8 +282,14 @@ Invoke-RestMethod ${appURLvalue}
           </ModalBody>
 
           <ModalFooter>
-            <Button colorScheme="blue" mr={3}>
-              Save
+            <Button
+              colorScheme={appCreateStatus}
+              mr={3}
+              onClick={handleAppCreation}
+            >
+              {appCreateStatus === "blue" ? "Save" : null}
+              {appCreateStatus === "green" ? "Done!" : null}
+              {appCreateStatus === "red" ? "Error" : null}
             </Button>
             <Button onClick={onClose}>Cancel</Button>
           </ModalFooter>
