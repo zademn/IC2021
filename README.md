@@ -35,3 +35,8 @@ _temporary architecture_
 
 ![](images/main_page.png)
 ![](images/logged_in.png)
+
+
+# Adding a new app
+![](images/new_app1.png)
+![](images/new_app2.png)
