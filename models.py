@@ -58,9 +58,9 @@ User_Pydantic = pydantic_model_creator(
     User, name="User", exclude=('created_at', 'modified_at', 'uuid'))
 
 
-class Cron(models.Model):
+class HealthCheck(models.Model):
     """
-    Cron model
+    HealthCheck model
     """
     # Id stuff
     id = fields.IntField(pk=True)
@@ -76,8 +76,8 @@ class Cron(models.Model):
         "models.User")
 
 
-Cron_Pydantic = pydantic_model_creator(
-    Cron, name="Cron", exclude=('created_at', 'modified_at'))
+HealthCheck_Pydantic = pydantic_model_creator(
+    HealthCheck, name="HealthCheck", exclude=('created_at', 'modified_at'))
 
 
 class MonitoringService(str, Enum):
@@ -120,8 +120,7 @@ class EmailSchema(BaseModel):
     content: str
 
 
-class AppConfig(BaseModel):
-    app_type: str
+class HealthCheckConfig(BaseModel):
     app_name: str
     period: int
     grace: int

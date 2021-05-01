@@ -52,14 +52,13 @@ export default function ModalNewApp({ cookieToken }) {
   };
   const handleAppCreation = () => {
     if (appType === "Health Check") {
-      let appConfig = {
-        app_type: appType,
+      let healthCheckConfig = {
         app_name: appName,
         period: period,
         grace: gracePeriod,
       };
       axios
-        .post(appURLvalue, appConfig, {
+        .post(appURLvalue, healthCheckConfig, {
           headers: {
             Authorization: cookieToken,
           },
