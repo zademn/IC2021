@@ -80,12 +80,6 @@ HealthCheck_Pydantic = pydantic_model_creator(
     HealthCheck, name="HealthCheck", exclude=('created_at', 'modified_at'))
 
 
-class MonitoringService(str, Enum):
-    cpu = 'cpu'
-    memory = 'memory'
-    disk = 'disk'
-
-
 class Monitoring(models.Model):
     """
     Monitoring model
@@ -95,7 +89,6 @@ class Monitoring(models.Model):
     name = fields.CharField(max_length=128, unique=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     modified_at = fields.DatetimeField(auto_now=True)
-    service = fields.CharEnumField(MonitoringService)
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         "models.User")
 
