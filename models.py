@@ -80,6 +80,24 @@ HealthCheck_Pydantic = pydantic_model_creator(
     HealthCheck, name="HealthCheck", exclude=('created_at', 'modified_at'))
 
 
+class HealthCheckStatus(models.Model):
+    """
+    Status for the health check for an app
+    """
+    # Id stuff
+    id = fields.IntField(pk=True)
+    last_received = fields.DatetimeField()
+    next_receive = fields.DatetimeField()
+
+    # Relations
+    health_check: fields.ForeignKeyRelation[HealthCheck] = fields.ForeignKeyField(
+        "models.HealthCheck")
+
+
+HealthCheckStatus_Pydantic = pydantic_model_creator(
+    HealthCheckStatus, name="HealthCheckStatus")
+
+
 class Monitoring(models.Model):
     """
     Monitoring model

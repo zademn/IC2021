@@ -20,11 +20,13 @@ from fastapi_mail.email_utils import DefaultChecker
 
 from fastapi import FastAPI, HTTPException, Response, status, Depends, Header
 from fastapi.security import OAuth2PasswordRequestForm
-from models import User_Pydantic, User, Status, UserIn, Token, EmailSchema, HealthCheck, HealthCheckConfig
+from models import User_Pydantic, User, Status, UserIn, Token, EmailSchema, HealthCheck, HealthCheckConfig, HealthCheckStatus
 from crypto import valid_password, hash_password, verify_password
 from crypto import create_access_token, get_current_active_user
 from uuid import UUID
 import time
+
+from datetime import datetime, timedelta
 
 
 from tortoise.contrib.fastapi import HTTPNotFoundError, register_tortoise
@@ -134,6 +136,16 @@ async def create_app(health_check_config: HealthCheckConfig, app_id: UUID, curre
                                             uuid=app_id,
                                             period=health_check_config.period,
                                             grace=health_check_config.grace)
+
+    current_time = datetime.now()
+    next_receive = current_time + \
+        timedelta(minutes=health_check_config.period+health_check_config.grace)
+
+    health_check_status = await HealthCheckStatus.create(
+        last_received=current_time,
+        next_receive=next_receive,
+        health_check=health_check
+    )
 
     raise HTTPException(
         status_code=status.HTTP_201_CREATED,
