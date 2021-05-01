@@ -8,6 +8,18 @@ import axios from "axios";
 import { useCookies } from "react-cookie";
 import { StackDivider, VStack } from "@chakra-ui/react";
 import { Select, ButtonGroup } from "@chakra-ui/react";
+import {
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuItemOption,
+  MenuGroup,
+  MenuOptionGroup,
+  MenuIcon,
+  MenuCommand,
+  MenuDivider,
+} from "@chakra-ui/react";
 
 function getExpiryDateToken(token) {
   // Split token at .
@@ -34,7 +46,6 @@ export default function Dashboard() {
   const [cookie, setCookie] = useCookies(["token"]);
   const { state, dispatch } = useContext(Context);
   const [srvTime, setSrvTime] = useState(-1);
-  const [selectValue, setSelectValue] = useState("");
 
   useEffect(() => {
     axios
@@ -49,10 +60,6 @@ export default function Dashboard() {
       payload: getUserEmail(cookie.token),
     });
   }, []);
-
-  function handleSelectChange(e) {
-    setSelectValue(e.target.value);
-  }
 
   if (
     getExpiryDateToken(cookie.token) == -1 ||
@@ -109,17 +116,25 @@ export default function Dashboard() {
         </Box>
         <Box h="40px">
           <ButtonGroup variant="outline" spacing="6" w={["100%", "85%", "60%"]}>
-            <Select
-              placeholder="Choose an application"
-              variant="filled"
-              bg="teal.500"
-              onChange={handleSelectChange}
-              size="lg"
-            >
-              <option value="option1">Option 1</option>
-              <option value="option2">Option 2</option>
-              <option value="option3">Option 3</option>
-            </Select>
+            <Menu>
+              <MenuButton as={Button} colorScheme="teal" size="lg">
+                Choose an app
+              </MenuButton>
+              <MenuList>
+                <MenuGroup title="HealthChecks">
+                  <MenuItem>My Account</MenuItem>
+                  <MenuItem>Payments </MenuItem>
+                </MenuGroup>
+                <MenuDivider />
+                <MenuGroup title="Monitoring">
+                  <MenuItem>Docs</MenuItem>
+                </MenuGroup>
+                <MenuDivider />
+                <MenuGroup title="Logging">
+                  <MenuItem>Docs</MenuItem>
+                </MenuGroup>
+              </MenuList>
+            </Menu>
             <ModalNewApp cookieToken={cookie.token} />
           </ButtonGroup>
         </Box>

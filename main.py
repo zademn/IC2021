@@ -54,7 +54,7 @@ app.add_middleware(
 
 @app.post("/register")
 async def register_user(user: UserIn):
-    """ 
+    """
     Registers a user,
     takes a user_in model which is just {"email": ..., "password": ...}
     """
@@ -79,7 +79,7 @@ async def register_user(user: UserIn):
 
 @app.post("/token", response_model=Token)
 async def get_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    """ 
+    """
     Used for getting the jwt token,
     takes a form data with {"username": ... , "password": ...}
     but username is email in our case
@@ -152,6 +152,40 @@ async def create_app(health_check_config: HealthCheckConfig, app_id: UUID, curre
         detail="App created",
     )
     return health_check_config
+
+
+@app.get("/app/{app_id}")
+async def ping_app(app_id: UUID):
+    health_check = await HealthCheck.get_or_none(uuid=app_id)
+
+    if health_check is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="App does not exist",
+        )
+
+    hc_status = await HealthCheckStatus.filter(health_check_id=health_check.id)
+    last_entry = hc_status[len(hc_status)-1]
+
+    curr_time = datetime.now()
+    if curr_time > last_entry.next_receive.replace(tzinfo=None):
+        pass
+    else:
+        last_entry.done = True
+        await last_entry.save()
+
+    next_receive = curr_time + \
+        timedelta(minutes=health_check.period+health_check.grace)
+
+    health_check_status = await HealthCheckStatus.create(
+        last_received=curr_time,
+        next_receive=next_receive,
+        health_check=health_check
+    )
+
+    raise HTTPException(
+        status_code=status.HTTP_200_OK,
+    )
 
 
 @app.get("/")

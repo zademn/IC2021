@@ -88,6 +88,7 @@ class HealthCheckStatus(models.Model):
     id = fields.IntField(pk=True)
     last_received = fields.DatetimeField()
     next_receive = fields.DatetimeField()
+    done = fields.BooleanField(default=False)
 
     # Relations
     health_check: fields.ForeignKeyRelation[HealthCheck] = fields.ForeignKeyField(
