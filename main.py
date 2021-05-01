@@ -129,27 +129,11 @@ async def get_unix_time():
 async def create_app(health_check_config: HealthCheckConfig, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
     user_obj = await User.get(id=current_user.id)
 
-    period_hours = health_check_config.period // 60
-    period_minutes = health_check_config.period % 60
-
-    if period_hours == 0:
-        period_string = f"*/{period_minutes} * * * *"
-    elif period_minutes == 0:
-        period_string = f"* */{period_hours} * * *"
-    else:
-        period_string = f"*/{period_minutes} */{period_hours} * * *"
-
-    grace_hours = health_check_config.grace // 60
-    grace_minutes = health_check_config.grace % 60
-
-    if grace_hours == 0:
-        grace_string = f"*/{grace_minutes} * * * *"
-    elif grace_minutes == 0:
-        grace_string = f"* */{grace_hours} * * *"
-    else:
-        grace_string = f"*/{grace_minutes} */{grace_hours} * * *"
-
-    health_check = await HealthCheck.create(name=health_check_config.app_name, user=user_obj, uuid=app_id, period=period_string, grace=grace_string)
+    health_check = await HealthCheck.create(name=health_check_config.app_name,
+                                            user=user_obj,
+                                            uuid=app_id,
+                                            period=health_check_config.period,
+                                            grace=health_check_config.grace)
 
     raise HTTPException(
         status_code=status.HTTP_201_CREATED,

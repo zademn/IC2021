@@ -68,8 +68,8 @@ class HealthCheck(models.Model):
     name = fields.CharField(max_length=128, unique=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     modified_at = fields.DatetimeField(auto_now=True)
-    period = fields.CharField(max_length=100, default="* */5 * * *")
-    grace = fields.CharField(max_length=100, default="* */5 * * *")
+    period = fields.IntField(default=5)
+    grace = fields.IntField(default=5)
 
     # Relations
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
