@@ -194,6 +194,15 @@ async def ping_app(app_id: UUID):
     )
 
 
+@app.get("/apps-hc")
+async def list_healtchecks(current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+    healthchecks = await HealthCheck.all().filter(user=user_obj)
+    if healthchecks == []:
+        return {}
+    return healthchecks
+
+
 @app.get("/")
 async def root():
     return Response(content="OK", media_type="text/plain")

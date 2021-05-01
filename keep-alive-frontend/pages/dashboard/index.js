@@ -61,6 +61,46 @@ export default function Dashboard() {
     });
   }, []);
 
+  // get healthchecks
+  const [hcApps, setHcApps] = useState(null);
+  useEffect(() => {
+    axios
+      .get(`${process.env.backend}/apps-hc`, {
+        headers: {
+          Authorization: cookie.token,
+        },
+      })
+      .then((res) => setHcApps(res.data))
+      .catch((err) => {});
+  }, []);
+
+  // get monitoring
+
+  const [monApps, setMonApps] = useState(null);
+  useEffect(() => {
+    axios
+      .get(`${process.env.backend}/apps-mon`, {
+        headers: {
+          Authorization: cookie.token,
+        },
+      })
+      .then((res) => setMonApps(res.json))
+      .catch((err) => {});
+  }, []);
+  // get logging
+
+  const [logApps, setLogApps] = useState(null);
+  useEffect(() => {
+    axios
+      .get(`${process.env.backend}/apps-log`, {
+        headers: {
+          Authorization: cookie.token,
+        },
+      })
+      .then((res) => setLogApps(res.json))
+      .catch((err) => {});
+  }, []);
+
   if (
     getExpiryDateToken(cookie.token) == -1 ||
     getExpiryDateToken(cookie.token) < srvTime
@@ -122,16 +162,27 @@ export default function Dashboard() {
               </MenuButton>
               <MenuList>
                 <MenuGroup title="HealthChecks">
-                  <MenuItem>My Account</MenuItem>
-                  <MenuItem>Payments </MenuItem>
+                  {hcApps !== null
+                    ? hcApps.map((hcApp) => {
+                        return <MenuItem>{hcApp.name}</MenuItem>;
+                      })
+                    : ""}
                 </MenuGroup>
                 <MenuDivider />
                 <MenuGroup title="Monitoring">
-                  <MenuItem>Docs</MenuItem>
+                  {monApps !== null
+                    ? monApps.map((monApp) => {
+                        return <MenuItem>{monApp.name}</MenuItem>;
+                      })
+                    : ""}
                 </MenuGroup>
                 <MenuDivider />
                 <MenuGroup title="Logging">
-                  <MenuItem>Docs</MenuItem>
+                  {logApps !== null
+                    ? logApps.map((logApp) => {
+                        return <MenuItem>{logApp.name}</MenuItem>;
+                      })
+                    : ""}
                 </MenuGroup>
               </MenuList>
             </Menu>
