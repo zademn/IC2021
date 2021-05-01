@@ -25,11 +25,14 @@ from crypto import valid_password, hash_password, verify_password
 from crypto import create_access_token, get_current_active_user
 from uuid import UUID
 import time
+import asyncio
 
 from datetime import datetime, timedelta
 
 
 from tortoise.contrib.fastapi import HTTPNotFoundError, register_tortoise
+
+from db_check import check_db_every_x_seconds, clean_late_entries
 
 app = FastAPI(title="Tortoise ORM FastAPI example")
 
@@ -50,6 +53,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def initial_task():
+    task = asyncio.create_task(check_db_every_x_seconds(5, clean_late_entries))
 
 
 @app.post("/register")
@@ -168,9 +176,7 @@ async def ping_app(app_id: UUID):
     last_entry = hc_status[len(hc_status)-1]
 
     curr_time = datetime.now()
-    if curr_time > last_entry.next_receive.replace(tzinfo=None):
-        pass
-    else:
+    if curr_time < last_entry.next_receive.replace(tzinfo=None):
         last_entry.done = True
         await last_entry.save()
 
