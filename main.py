@@ -203,6 +203,15 @@ async def list_healtchecks(current_user: User_Pydantic = Depends(get_current_act
     return healthchecks
 
 
+@app.get("/apps-hc-status/{app_id}")
+async def list_healthcheck_status(app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+    healthcheck = await HealthCheck.get(uuid=app_id).filter(user=user_obj)
+    healthcheck_statuses = await HealthCheckStatus.all().filter(health_check=healthcheck)
+
+    return healthcheck_statuses
+
+
 @app.get("/")
 async def root():
     return Response(content="OK", media_type="text/plain")
