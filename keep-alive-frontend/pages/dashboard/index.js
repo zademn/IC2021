@@ -7,17 +7,23 @@ import { useContext, useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useCookies } from "react-cookie";
 import { StackDivider, VStack } from "@chakra-ui/react";
-import { Select, ButtonGroup } from "@chakra-ui/react";
+import { ButtonGroup } from "@chakra-ui/react";
+import {
+  Table,
+  Thead,
+  Tbody,
+  Tfoot,
+  Tr,
+  Th,
+  Td,
+  Badge,
+} from "@chakra-ui/react";
 import {
   Menu,
   MenuButton,
   MenuList,
   MenuItem,
-  MenuItemOption,
   MenuGroup,
-  MenuOptionGroup,
-  MenuIcon,
-  MenuCommand,
   MenuDivider,
 } from "@chakra-ui/react";
 
@@ -63,6 +69,7 @@ export default function Dashboard() {
 
   // get healthchecks
   const [hcApps, setHcApps] = useState(null);
+
   useEffect(() => {
     axios
       .get(`${process.env.backend}/apps-hc`, {
@@ -74,6 +81,28 @@ export default function Dashboard() {
       .catch((err) => {});
   }, []);
 
+  // keep track of the current selected app
+  const [currentSelectedApp, setCurrentSelectedApp] = useState(null);
+
+  // statuses for the selected app
+  const [hcAppsStatuses, setHcAppsStatuses] = useState(null);
+  // when you get the result, set the mon and log apps to null
+  // basically removes the render
+  function getHealthCheckStatuses(app_id) {
+    axios
+      .get(`${process.env.backend}/apps-hc-status/${app_id}`, {
+        headers: {
+          Authorization: cookie.token,
+        },
+      })
+      .then((res) => {
+        setLogAppsStatuses(null);
+        setMonAppsStatuses(null);
+        setHcAppsStatuses(res.data);
+      })
+      .catch((err) => {});
+  }
+
   // get monitoring
 
   const [monApps, setMonApps] = useState(null);
@@ -84,9 +113,28 @@ export default function Dashboard() {
           Authorization: cookie.token,
         },
       })
-      .then((res) => setMonApps(res.json))
+      .then((res) => {
+        setHcAppsStatuses(null);
+        setLogAppsStatuses(null);
+        setMonApps(res.json);
+      })
       .catch((err) => {});
   }, []);
+  const [monAppsStatuses, setMonAppsStatuses] = useState(null);
+  function getMonStatuses(app_id) {
+    axios
+      .get(`${process.env.backend}/apps-mon-status/${app_id}`, {
+        headers: {
+          Authorization: cookie.token,
+        },
+      })
+      .then((res) => {
+        setHcAppsStatuses(null);
+        setLogAppsStatuses(null);
+        setMonAppsStatuses(res.data);
+      })
+      .catch((err) => {});
+  }
   // get logging
 
   const [logApps, setLogApps] = useState(null);
@@ -100,6 +148,17 @@ export default function Dashboard() {
       .then((res) => setLogApps(res.json))
       .catch((err) => {});
   }, []);
+  const [logAppsStatuses, setLogAppsStatuses] = useState(null);
+  function getLogStatuses(app_id) {
+    axios
+      .get(`${process.env.backend}/apps-log-status/${app_id}`, {
+        headers: {
+          Authorization: cookie.token,
+        },
+      })
+      .then((res) => setLogAppsStatuses(res.data))
+      .catch((err) => {});
+  }
 
   if (
     getExpiryDateToken(cookie.token) == -1 ||
@@ -164,7 +223,19 @@ export default function Dashboard() {
                 <MenuGroup title="HealthChecks">
                   {hcApps !== null
                     ? hcApps.map((hcApp) => {
-                        return <MenuItem>{hcApp.name}</MenuItem>;
+                        return (
+                          <MenuItem
+                            onClick={() => {
+                              getHealthCheckStatuses(hcApp.uuid);
+                              setCurrentSelectedApp({
+                                name: hcApp.name,
+                                id: hcApp.uuid,
+                              });
+                            }}
+                          >
+                            {hcApp.name}
+                          </MenuItem>
+                        );
                       })
                     : ""}
                 </MenuGroup>
@@ -188,6 +259,60 @@ export default function Dashboard() {
             </Menu>
             <ModalNewApp cookieToken={cookie.token} />
           </ButtonGroup>
+        </Box>
+        {currentSelectedApp === null ? null : (
+          <Box mt="10">
+            <Text fontWeight="bold" fontSize="xl">
+              {currentSelectedApp?.name}{" "}
+            </Text>
+            <Text fontWeight="bold" fontSize="xl" bg="blue.800">
+              {process.env.backend}/app/{currentSelectedApp?.id}
+            </Text>
+          </Box>
+        )}
+        <Box mt="10">
+          {hcAppsStatuses !== null ? (
+            <Table variant="simple">
+              <Thead>
+                <Tr>
+                  <Th>ID</Th>
+                  <Th>Next check for </Th>
+                  <Th>Status</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {hcAppsStatuses.map((hcStatus, index) => {
+                  const length = hcAppsStatuses.length;
+                  return (
+                    <Tr>
+                      <Td>{index + 1}</Td>
+                      <Td>{hcStatus.next_receive}</Td>
+                      <Td>
+                        {hcStatus.done === false ? (
+                          index === length - 1 ? (
+                            <Badge colorScheme="orange">Waiting</Badge>
+                          ) : (
+                            <Badge colorScheme="red">Failed</Badge>
+                          )
+                        ) : (
+                          <Badge colorScheme="green">Received</Badge>
+                        )}
+                      </Td>
+                    </Tr>
+                  );
+                })}
+              </Tbody>
+              <Tfoot>
+                <Tr>
+                  <Th>ID</Th>
+                  <Th>Next check</Th>
+                  <Th>Status</Th>
+                </Tr>
+              </Tfoot>
+            </Table>
+          ) : null}
+          {logAppsStatuses !== null ? null : null}
+          {monAppsStatuses !== null ? null : null}
         </Box>
       </VStack>
     </Box>
