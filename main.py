@@ -216,13 +216,6 @@ async def list_healthcheck_status(app_id: UUID, current_user: User_Pydantic = De
 
 @app.post("/app-logging/{app_id}")
 async def create_logger(app_name: str, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
-    '''
-    logger_config: {
-        app_name: str,
-        device_id: str,
-        severity_level: int,
-        message: str}
-    '''
     user_obj = await User.get(id=current_user.id)
     logger_app = await Logger.create(name=app_name,
                                      user=user_obj,
@@ -238,7 +231,6 @@ async def create_logger(app_name: str, app_id: UUID, current_user: User_Pydantic
 async def create_logger_status(logger_config: LoggerStatusConfig, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
     '''
     logger_config: {
-        app_name: str,
         device_id: str,
         severity_level: int,
         message: str}
