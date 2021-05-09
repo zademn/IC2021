@@ -70,7 +70,7 @@ export default function Dashboard() {
 
   const [fetchApps, setFetchApps] = useState(true);
 
-  // get healthchecks
+  // -------------------------------------------- get healthchecks
   const [hcApps, setHcApps] = useState(null);
 
   useEffect(() => {
@@ -106,7 +106,7 @@ export default function Dashboard() {
       .catch((err) => {});
   }
 
-  // get monitoring
+  // -------------------------------------------- get monitoring
 
   const [monApps, setMonApps] = useState(null);
   useEffect(() => {
@@ -119,7 +119,7 @@ export default function Dashboard() {
       .then((res) => {
         setHcAppsStatuses(null);
         setLogAppsStatuses(null);
-        setMonApps(res.json);
+        setMonApps(res.data);
       })
       .catch((err) => {});
   }, [fetchApps]);
@@ -138,7 +138,7 @@ export default function Dashboard() {
       })
       .catch((err) => {});
   }
-  // get logging
+  // -------------------------------------------- get logging
 
   const [logApps, setLogApps] = useState(null);
   useEffect(() => {
@@ -148,18 +148,22 @@ export default function Dashboard() {
           Authorization: cookie.token,
         },
       })
-      .then((res) => setLogApps(res.json))
+      .then((res) => setLogApps(res.data))
       .catch((err) => {});
   }, [fetchApps]);
   const [logAppsStatuses, setLogAppsStatuses] = useState(null);
   function getLogStatuses(app_id) {
     axios
-      .get(`${process.env.backend}/apps-log-status/${app_id}`, {
+      .get(`${process.env.backend}/app-logging/${app_id}`, {
         headers: {
           Authorization: cookie.token,
         },
       })
-      .then((res) => setLogAppsStatuses(res.data))
+      .then((res) => {
+        setMonAppsStatuses(null);
+        setHcAppsStatuses(null);
+        setLogAppsStatuses(res.data);
+      })
       .catch((err) => {});
   }
 
@@ -229,13 +233,14 @@ export default function Dashboard() {
               </MenuButton>
               <MenuList>
                 <MenuGroup title="HealthChecks">
-                  {hcApps !== null
+                  {hcApps
                     ? hcApps.map((hcApp) => {
                         return (
                           <MenuItem
                             onClick={() => {
                               getHealthCheckStatuses(hcApp.uuid);
                               setCurrentSelectedApp({
+                                app_type: "HealthCheck",
                                 name: hcApp.name,
                                 id: hcApp.uuid,
                               });
@@ -257,9 +262,22 @@ export default function Dashboard() {
                 </MenuGroup>
                 <MenuDivider />
                 <MenuGroup title="Logging">
-                  {logApps !== null
+                  {logApps
                     ? logApps.map((logApp) => {
-                        return <MenuItem>{logApp.name}</MenuItem>;
+                        return (
+                          <MenuItem
+                            onClick={() => {
+                              getLogStatuses(logApp.uuid);
+                              setCurrentSelectedApp({
+                                app_type: "Logging",
+                                name: logApp.name,
+                                id: logApp.uuid,
+                              });
+                            }}
+                          >
+                            {logApp.name}
+                          </MenuItem>
+                        );
                       })
                     : ""}
                 </MenuGroup>
@@ -274,12 +292,16 @@ export default function Dashboard() {
               {currentSelectedApp?.name}{" "}
             </Text>
             <Text fontWeight="bold" fontSize="xl" bg="blue.800">
-              {process.env.backend}/app/{currentSelectedApp?.id}
+              {currentSelectedApp.app_type === "HealthCheck" &&
+                `${process.env.backend}/app/${currentSelectedApp?.id}`}
+              {currentSelectedApp.app_type === "Logging" &&
+                `${process.env.backend}/app-logging-status/${currentSelectedApp?.id}`}
             </Text>
           </Box>
         )}
-        <Box mt="10">
-          {hcAppsStatuses !== null ? (
+
+        {hcAppsStatuses !== null ? (
+          <Box mt="10">
             <Table variant="simple">
               <Thead>
                 <Tr>
@@ -318,11 +340,21 @@ export default function Dashboard() {
                 </Tr>
               </Tfoot>
             </Table>
-          ) : null}
-          {logAppsStatuses !== null ? null : null}
-          {monAppsStatuses !== null ? null : null}
-        </Box>
-        <DataTable />
+          </Box>
+        ) : null}
+
+        {logAppsStatuses ? (
+          <DataTable
+            received={logAppsStatuses.map((status) => {
+              return {
+                timestamp: status.timestamp,
+                deviceID: status.device_id,
+                severityLevel: status.severity_level,
+                message: status.message,
+              };
+            })}
+          />
+        ) : null}
       </VStack>
     </Box>
   );

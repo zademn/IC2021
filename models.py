@@ -167,6 +167,10 @@ class LoggerStatusConfig(BaseModel):
     message: str
 
 
+class LoggerConfig(BaseModel):
+    app_name: str
+
+
 class HealthCheckConfig(BaseModel):
     app_name: str
     period: int

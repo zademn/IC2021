@@ -75,6 +75,29 @@ export default function ModalNewApp({ cookieToken }) {
             setAppCreateStatus("blue");
           }, 1000);
         });
+    } else if (appType === "Logging") {
+      console.log(appName, appURLvalue.replace("app", "app-logging"));
+      let loggerConfig = {
+        app_name: appName,
+      };
+      axios
+        .post(appURLvalue.replace("app", "app-logging"), loggerConfig, {
+          headers: {
+            Authorization: cookieToken,
+          },
+        })
+        .then((res) => {
+          setAppCreateStatus("green");
+          setTimeout(() => {
+            setAppCreateStatus("blue");
+          }, 1000);
+        })
+        .catch((err) => {
+          setAppCreateStatus("red");
+          setTimeout(() => {
+            setAppCreateStatus("blue");
+          }, 1000);
+        });
     }
   };
 
@@ -266,16 +289,42 @@ Invoke-RestMethod ${appURLvalue}
                 </Tabs>
               </FormControl>
             ) : null}
-            {appType == "Monitoring" ? (
-              <FormControl mt={4}>
-                <FormLabel>Monitoring </FormLabel>
-                <Input placeholder="mm" />
-              </FormControl>
-            ) : null}
+            {appType == "Monitoring" ? null : null}
             {appType == "Logging" ? (
               <FormControl mt={4}>
-                <FormLabel>Logging </FormLabel>
-                <Input placeholder="LL" />
+                <FormLabel>
+                  Keep this check up by making POST requests to this url:
+                </FormLabel>
+                <Flex mb={2}>
+                  <Input
+                    value={appURLvalue.replace("app", "app-logging")}
+                    isReadOnly
+                    placeholder="Welcome"
+                  />
+                  <Button onClick={onCopy} ml={2}>
+                    {hasCopied ? "Copied" : "Copy"}
+                  </Button>
+                </Flex>
+                <FormLabel mt={4}>Example of JSON body:</FormLabel>
+                <FormLabel>
+                  The device_id can be anything that identifies the device, such
+                  as a name or ip
+                </FormLabel>
+                <FormLabel>
+                  Severity is the severity level of the log, usually between 1
+                  and 7
+                </FormLabel>
+                <FormLabel>
+                  The message can be anything related to this event
+                </FormLabel>
+                <pre style={{ whiteSpace: "pre-wrap" }}>
+                  {`
+curl --header "Content-Type: application/json" \
+--request POST \
+--data '{"device_id":"name_or_ip","severity_level":1,"message":"my custom message"}' \
+${appURLvalue.replace("app", "app-logging")}
+                      `}
+                </pre>
               </FormControl>
             ) : null}
           </ModalBody>

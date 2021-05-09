@@ -16,43 +16,11 @@ import {
   TriangleUpIcon,
 } from "@chakra-ui/icons";
 import { useTable, useSortBy } from "react-table";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo } from "react";
 import axios from "axios";
 
-export default function DataTable({ logAppId }) {
-  const data = useMemo(
-    () => [
-      {
-        timestamp: "2021-05-01T15:33:41.372922+00:00",
-        deviceID: "CentOS server",
-        severityLevel: 1,
-        message: "Didn't receive stuff in time",
-      },
-      {
-        timestamp: "2021-05-01T13:11:45.416313+00:00",
-        deviceID: "123.123.123.123",
-        severityLevel: 6,
-        message: "Weird ssh ip",
-      },
-      {
-        timestamp: "2021-05-01T16:03:08.172380+00:00",
-        deviceID: "RaspberryPI",
-        severityLevel: 7,
-        message: "Kernel panic",
-      },
-      {
-        timestamp: "2021-05-01T18:03:04.175680+00:00",
-        deviceID: "Samsung galaxy S20",
-        severityLevel: 1,
-        message: `Sed ut perspiciatis unde 
-          omnis iste natus error sit voluptatem accusantium 
-          doloremque laudantium, totam rem aperiam, eaque ipsa q
-          uae ab illo inventore veritatis et quasi architecto beatae 
-          vitae dicta sunt explicabo. `,
-      },
-    ],
-    []
-  );
+export default function DataTable({ received }) {
+  const data = received;
 
   const columns = useMemo(
     () => [
@@ -85,13 +53,7 @@ export default function DataTable({ logAppId }) {
   } = useTable({ columns, data }, useSortBy);
 
   return (
-    <Box>
-      <IconButton
-        colorScheme="teal"
-        aria-label="Call Segun"
-        size="lg"
-        icon={<RepeatIcon />}
-      />
+    <Box mt={10}>
       <Table {...getTableProps()}>
         <Thead>
           {headerGroups.map((headerGroup) => (
