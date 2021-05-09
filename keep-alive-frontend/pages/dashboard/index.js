@@ -322,7 +322,7 @@ export default function Dashboard() {
           {logAppsStatuses !== null ? null : null}
           {monAppsStatuses !== null ? null : null}
         </Box>
-        {/* <DataTable /> */}
+        <DataTable />
       </VStack>
     </Box>
   );
