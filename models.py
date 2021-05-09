@@ -141,7 +141,7 @@ class LoggerStatus(models.Model):
     '''
     # Id stuff
     id = fields.IntField(pk=True)
-    timestamp = fields.DatetimeField()
+    timestamp = fields.DatetimeField(auto_now_add=True)
     device_id = fields.CharField(max_length = 128)
     severity_level = fields.IntField()
     message = fields.CharField(max_length = 1024)
@@ -159,8 +159,7 @@ class EmailSchema(BaseModel):
     content: str
 
 
-class LoggerConfig(BaseModel):
-    app_name: str
+class LoggerStatusConfig(BaseModel):
     #data: Dict[str, str]
     device_id: str
     severity_level: int

@@ -21,7 +21,7 @@ from fastapi_mail.email_utils import DefaultChecker
 from fastapi import FastAPI, HTTPException, Response, status, Depends, Header
 from fastapi.security import OAuth2PasswordRequestForm
 from models import (User_Pydantic, User, Status, UserIn, Token, EmailSchema,
-                    HealthCheck, HealthCheckConfig, HealthCheckStatus, Monitoring, Logger, LoggerConfig)
+                    HealthCheck, HealthCheckConfig, HealthCheckStatus, Monitoring, Logger, LoggerStatusConfig)
 from crypto import valid_password, hash_password, verify_password
 from crypto import create_access_token, get_current_active_user
 from uuid import UUID
@@ -215,7 +215,7 @@ async def list_healthcheck_status(app_id: UUID, current_user: User_Pydantic = De
 
 
 @app.post("/app-logging/{app_id}")
-async def create_logger(logger_config: LoggerConfig, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+async def create_logger(app_name: str, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
     '''
     logger_config: {
         app_name: str,
@@ -224,15 +224,9 @@ async def create_logger(logger_config: LoggerConfig, app_id: UUID, current_user:
         message: str}
     '''
     user_obj = await User.get(id=current_user.id)
-    current_time = datetime.now()
-    logger_app = await Logger.create(name=logger_config.app_name,
+    logger_app = await Logger.create(name=app_name,
                                      user=user_obj,
                                      uuid=app_id)
-    logger_status = await LoggerStatus.create(timestamp=current_time,
-                                              device_id=logger_config.device_id,
-                                              severity_level=logger_config.severity_level,
-                                              message=logger_status.message,
-                                              logger=logger_app)
 
     raise HTTPException(
         status_code=status.HTTP_201_CREATED,
@@ -241,7 +235,7 @@ async def create_logger(logger_config: LoggerConfig, app_id: UUID, current_user:
 
 
 @app.post("/app-logging-status/{app_id}")
-async def create_logger_status(logger_config: LoggerConfig, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+async def create_logger_status(logger_config: LoggerStatusConfig, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
     '''
     logger_config: {
         app_name: str,
@@ -262,9 +256,7 @@ async def create_logger_status(logger_config: LoggerConfig, app_id: UUID, curren
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Logger doesn't exist",
         )
-    current_time = datetime.now()
-    logger_status = await LoggerStatus.create(timestamp=current_time,
-                                              device_id=logger_config.device_id,
+    logger_status = await LoggerStatus.create(device_id=logger_config.device_id,
                                               severity_level=logger_config.severity_level,
                                               message=logger_status.message,
                                               logger=logger_app)
