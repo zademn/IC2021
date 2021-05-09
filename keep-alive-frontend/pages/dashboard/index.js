@@ -67,6 +67,8 @@ export default function Dashboard() {
     });
   }, []);
 
+  const [fetchApps, setFetchApps] = useState(true);
+
   // get healthchecks
   const [hcApps, setHcApps] = useState(null);
 
@@ -79,7 +81,7 @@ export default function Dashboard() {
       })
       .then((res) => setHcApps(res.data))
       .catch((err) => {});
-  }, []);
+  }, [fetchApps]);
 
   // keep track of the current selected app
   const [currentSelectedApp, setCurrentSelectedApp] = useState(null);
@@ -119,7 +121,7 @@ export default function Dashboard() {
         setMonApps(res.json);
       })
       .catch((err) => {});
-  }, []);
+  }, [fetchApps]);
   const [monAppsStatuses, setMonAppsStatuses] = useState(null);
   function getMonStatuses(app_id) {
     axios
@@ -147,7 +149,7 @@ export default function Dashboard() {
       })
       .then((res) => setLogApps(res.json))
       .catch((err) => {});
-  }, []);
+  }, [fetchApps]);
   const [logAppsStatuses, setLogAppsStatuses] = useState(null);
   function getLogStatuses(app_id) {
     axios
@@ -216,7 +218,12 @@ export default function Dashboard() {
         <Box h="40px">
           <ButtonGroup variant="outline" spacing="6" w={["100%", "85%", "60%"]}>
             <Menu>
-              <MenuButton as={Button} colorScheme="teal" size="lg">
+              <MenuButton
+                as={Button}
+                colorScheme="teal"
+                size="lg"
+                onClick={() => setFetchApps(!fetchApps)}
+              >
                 Choose an app
               </MenuButton>
               <MenuList>
