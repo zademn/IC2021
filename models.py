@@ -129,11 +129,11 @@ class Logger(models.Model):
     # Relations
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         "models.User")
-    #field_list = fields.CharField(max_length=1024) 
 
 
 Logger_Pydantic = pydantic_model_creator(
     Logger, name="Logger", exclude=('created_at', 'modified_at', 'uuid'))
+
 
 class LoggerStatus(models.Model):
     '''
@@ -142,13 +142,14 @@ class LoggerStatus(models.Model):
     # Id stuff
     id = fields.IntField(pk=True)
     timestamp = fields.DatetimeField(auto_now_add=True)
-    device_id = fields.CharField(max_length = 128)
+    device_id = fields.CharField(max_length=128)
     severity_level = fields.IntField()
-    message = fields.CharField(max_length = 1024)
+    message = fields.CharField(max_length=1024)
 
     # Relations
     logger: fields.ForeignKeyRelation[Logger] = fields.ForeignKeyField(
         "models.Logger")
+
 
 LoggerStatus_Pydantic = pydantic_model_creator(
     LoggerStatus, name="LoggerStatus")
