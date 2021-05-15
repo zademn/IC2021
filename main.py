@@ -6,7 +6,8 @@ from fastapi import (
     Form,
     Query,
     Body,
-    Depends
+    Depends,
+    WebSocket
 )
 from fastapi.middleware.cors import CORSMiddleware
 from mail import simple_send, conf
@@ -135,6 +136,7 @@ async def get_users():
 async def get_unix_time():
     return {"time": int(time.time())}
 
+## Health check stuff
 
 @app.post("/app/{app_id}")
 async def create_app(health_check_config: HealthCheckConfig, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
@@ -213,6 +215,7 @@ async def list_healthcheck_status(app_id: UUID, current_user: User_Pydantic = De
         return []
     return healthcheck_statuses
 
+## Logger stuff
 
 # http://127.0.0.1:8000/app-logging/18ff372e-8eb9-49ff-a835-2c602309f0bd?app_name=test
 @app.post("/app-logging/{app_id}")
@@ -278,6 +281,39 @@ async def list_loggers(current_user: User_Pydantic = Depends(get_current_active_
         return []
     return loggers
 
+## Monitoring stuff
+@app.post("/app-monitoring/{app_id}")
+async def create_monitoring(app_name: str, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+    monitoring_app = await Monitoring.create(name=app_name,
+                                     user=user_obj,
+                                     uuid=app_id)
+
+    raise HTTPException(
+        status_code=status.HTTP_201_CREATED,
+        detail="Monitoring app created",
+    )
+
+
+@app.get("/app-monitoring-all")
+async def list_monitoring(current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+    monitoring_apps = await Monitoring.all().filter(user=user_obj)
+    if monitoring_apps == []:
+        return {}
+    return monitoring_apps
+
+@app.websocket("/app-monitoring-ws/{app_id}")
+async def monitoring_websocket(websocket: WebSocket, current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+    monitoring_app = await Monitoring.get(uuid=app_id).filter(user=user_obj)
+
+    if monitoring_app is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Monitoring app doesn't exist",
+        )
+    # await websocket.accept()
 
 @app.get("/")
 async def root():
