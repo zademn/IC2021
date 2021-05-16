@@ -1,6 +1,7 @@
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
 import psutil
+import websockets
 
 app = FastAPI()
 
@@ -16,7 +17,7 @@ html = """
             <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
             <script>
                 TESTER = document.getElementById('chart');
-                var ws = new WebSocket("ws://localhost:8000/ws");
+                var ws = new WebSocket("ws://localhost:8000/ws_b");
                 var cnt = 0;
                 cnt_threshold = 10;
                 ws.onmessage = function(event) {
@@ -50,11 +51,27 @@ html = """
 async def get():
     return HTMLResponse(html)
 
+# A sends to B then B to frontend
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+
+@app.websocket("/ws_a")
+async def ws_a_endpoint(websocket: WebSocket):
+    print("Websocket A activating...")
     await websocket.accept()
     while True:
         # data = await websocket.receive_text()
         cpu_perc = psutil.cpu_percent(interval=1)
         await websocket.send_json({"cpu": cpu_perc})
+
+
+@app.websocket("/ws_b")
+async def ws_b_endpoint(websocket: WebSocket):
+    websocket_recv_uri = "ws://localhost:8000/ws_a"
+    websocket_recv = await websockets.connect(websocket_recv_uri)
+
+    print("Websocket B activating...")
+    await websocket.accept()
+    while True:
+        data = await websocket_recv.recv()
+        print(data)
+        await websocket.send_json(data)

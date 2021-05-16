@@ -1,7 +1,7 @@
 from tortoise import fields, models
 from tortoise.contrib.pydantic import pydantic_model_creator
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from typing import Optional, List, Dict
 from enum import Enum, IntEnum
 from uuid import uuid4
 
@@ -58,9 +58,9 @@ User_Pydantic = pydantic_model_creator(
     User, name="User", exclude=('created_at', 'modified_at', 'uuid'))
 
 
-class Cron(models.Model):
+class HealthCheck(models.Model):
     """
-    Cron model
+    HealthCheck model
     """
     # Id stuff
     id = fields.IntField(pk=True)
@@ -68,22 +68,35 @@ class Cron(models.Model):
     name = fields.CharField(max_length=128, unique=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     modified_at = fields.DatetimeField(auto_now=True)
-    period = fields.CharField(max_length=100, default="* */5 * * *")
-    grace = fields.CharField(max_length=100, default="* */5 * * *")
+    period = fields.IntField(default=5)
+    grace = fields.IntField(default=5)
 
     # Relations
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         "models.User")
 
 
-Cron_Pydantic = pydantic_model_creator(
-    Cron, name="Cron", exclude=('created_at', 'modified_at'))
+HealthCheck_Pydantic = pydantic_model_creator(
+    HealthCheck, name="HealthCheck", exclude=('created_at', 'modified_at'))
 
 
-class MonitoringService(str, Enum):
-    cpu = 'cpu'
-    memory = 'memory'
-    disk = 'disk'
+class HealthCheckStatus(models.Model):
+    """
+    Status for the health check for an app
+    """
+    # Id stuff
+    id = fields.IntField(pk=True)
+    last_received = fields.DatetimeField()
+    next_receive = fields.DatetimeField()
+    done = fields.BooleanField(default=False)
+
+    # Relations
+    health_check: fields.ForeignKeyRelation[HealthCheck] = fields.ForeignKeyField(
+        "models.HealthCheck")
+
+
+HealthCheckStatus_Pydantic = pydantic_model_creator(
+    HealthCheckStatus, name="HealthCheckStatus")
 
 
 class Monitoring(models.Model):
@@ -95,7 +108,6 @@ class Monitoring(models.Model):
     name = fields.CharField(max_length=128, unique=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     modified_at = fields.DatetimeField(auto_now=True)
-    service = fields.CharEnumField(MonitoringService)
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         "models.User")
 
@@ -105,14 +117,42 @@ Monitoring_Pydantic = pydantic_model_creator(
 
 
 class Logger(models.Model):
+    '''
+    Logger class
+    '''
     id = fields.IntField(pk=True)
-    monitoring: fields.OneToOneRelation[Monitoring] = fields.OneToOneField(
-        "models.Monitoring")
-    data = fields.CharField(max_length=1024)
+    uuid = fields.UUIDField()
+    name = fields.CharField(max_length=128, unique=True)
+    created_at = fields.DatetimeField(auto_now_add=True)
+    modified_at = fields.DatetimeField(auto_now=True)
+
+    # Relations
+    user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
+        "models.User")
 
 
 Logger_Pydantic = pydantic_model_creator(
     Logger, name="Logger", exclude=('created_at', 'modified_at', 'uuid'))
+
+
+class LoggerStatus(models.Model):
+    '''
+    Logger status for Logger app
+    '''
+    # Id stuff
+    id = fields.IntField(pk=True)
+    timestamp = fields.DatetimeField(auto_now_add=True)
+    device_id = fields.CharField(max_length=128)
+    severity_level = fields.IntField()
+    message = fields.CharField(max_length=1024)
+
+    # Relations
+    logger: fields.ForeignKeyRelation[Logger] = fields.ForeignKeyField(
+        "models.Logger")
+
+
+LoggerStatus_Pydantic = pydantic_model_creator(
+    LoggerStatus, name="LoggerStatus")
 
 
 class EmailSchema(BaseModel):
@@ -120,8 +160,18 @@ class EmailSchema(BaseModel):
     content: str
 
 
-class AppConfig(BaseModel):
-    app_type: str
+class LoggerStatusConfig(BaseModel):
+    #data: Dict[str, str]
+    device_id: str
+    severity_level: int
+    message: str
+
+
+class LoggerConfig(BaseModel):
+    app_name: str
+
+
+class HealthCheckConfig(BaseModel):
     app_name: str
     period: int
     grace: int

@@ -6,7 +6,8 @@ from fastapi import (
     Form,
     Query,
     Body,
-    Depends
+    Depends,
+    WebSocket
 )
 from fastapi.middleware.cors import CORSMiddleware
 from mail import simple_send, conf
@@ -20,14 +21,20 @@ from fastapi_mail.email_utils import DefaultChecker
 
 from fastapi import FastAPI, HTTPException, Response, status, Depends, Header
 from fastapi.security import OAuth2PasswordRequestForm
-from models import User_Pydantic, User, Status, UserIn, Token, EmailSchema, Cron, AppConfig
+from models import (User_Pydantic, User, Status, UserIn, Token, EmailSchema,
+                    HealthCheck, HealthCheckConfig, HealthCheckStatus, Monitoring, Logger, LoggerStatusConfig, LoggerStatus, LoggerConfig)
 from crypto import valid_password, hash_password, verify_password
 from crypto import create_access_token, get_current_active_user
 from uuid import UUID
 import time
+import asyncio
+
+from datetime import datetime, timedelta
 
 
 from tortoise.contrib.fastapi import HTTPNotFoundError, register_tortoise
+
+from db_check import check_db_every_x_seconds, clean_late_entries
 
 app = FastAPI(title="Tortoise ORM FastAPI example")
 
@@ -50,9 +57,14 @@ app.add_middleware(
 )
 
 
-@app.post("/register")
+@ app.on_event("startup")
+def initial_task():
+    task = asyncio.create_task(check_db_every_x_seconds(5, clean_late_entries))
+
+
+@ app.post("/register")
 async def register_user(user: UserIn):
-    """ 
+    """
     Registers a user,
     takes a user_in model which is just {"email": ..., "password": ...}
     """
@@ -77,7 +89,7 @@ async def register_user(user: UserIn):
 
 @app.post("/token", response_model=Token)
 async def get_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    """ 
+    """
     Used for getting the jwt token,
     takes a form data with {"username": ... , "password": ...}
     but username is email in our case
@@ -124,40 +136,184 @@ async def get_users():
 async def get_unix_time():
     return {"time": int(time.time())}
 
+## Health check stuff
 
 @app.post("/app/{app_id}")
-async def create_app(app_config: AppConfig, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+async def create_app(health_check_config: HealthCheckConfig, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
     user_obj = await User.get(id=current_user.id)
-    if app_config.app_type == "Health Check":
 
-        period_hours = app_config.period // 60
-        period_minutes = app_config.period % 60
+    health_check = await HealthCheck.create(name=health_check_config.app_name,
+                                            user=user_obj,
+                                            uuid=app_id,
+                                            period=health_check_config.period,
+                                            grace=health_check_config.grace)
 
-        if period_hours == 0:
-            period_string = f"*/{period_minutes} * * * *"
-        elif period_minutes == 0:
-            period_string = f"* */{period_hours} * * *"
-        else:
-            period_string = f"*/{period_minutes} */{period_hours} * * *"
+    current_time = datetime.now()
+    next_receive = current_time + \
+        timedelta(minutes=health_check_config.period+health_check_config.grace)
 
-        grace_hours = app_config.grace // 60
-        grace_minutes = app_config.grace % 60
+    health_check_status = await HealthCheckStatus.create(
+        last_received=current_time,
+        next_receive=next_receive,
+        health_check=health_check
+    )
 
-        if grace_hours == 0:
-            grace_string = f"*/{grace_minutes} * * * *"
-        elif grace_minutes == 0:
-            grace_string = f"* */{grace_hours} * * *"
-        else:
-            grace_string = f"*/{grace_minutes} */{grace_hours} * * *"
+    raise HTTPException(
+        status_code=status.HTTP_201_CREATED,
+        detail="App created",
+    )
+    return health_check_config
 
-        cron_job = await Cron.create(name=app_config.app_name, user=user_obj, uuid=app_id, period=period_string, grace=grace_string)
 
+@app.get("/app/{app_id}")
+async def ping_app(app_id: UUID):
+    health_check = await HealthCheck.get_or_none(uuid=app_id)
+
+    if health_check is None:
         raise HTTPException(
-            status_code=status.HTTP_201_CREATED,
-            detail="App created",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="App does not exist",
         )
-    return app_config
 
+    hc_status = await HealthCheckStatus.filter(health_check_id=health_check.id)
+    last_entry = hc_status[len(hc_status)-1]
+
+    curr_time = datetime.now()
+    if curr_time < last_entry.next_receive.replace(tzinfo=None):
+        last_entry.done = True
+        await last_entry.save()
+
+    next_receive = curr_time + \
+        timedelta(minutes=health_check.period+health_check.grace)
+
+    health_check_status = await HealthCheckStatus.create(
+        last_received=curr_time,
+        next_receive=next_receive,
+        health_check=health_check
+    )
+
+    raise HTTPException(
+        status_code=status.HTTP_200_OK,
+    )
+
+
+@app.get("/apps-hc")
+async def list_healtchecks(current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+    healthchecks = await HealthCheck.all().filter(user=user_obj)
+    if healthchecks == []:
+        return []
+    return healthchecks
+
+
+@app.get("/apps-hc-status/{app_id}")
+async def list_healthcheck_status(app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+    healthcheck = await HealthCheck.get(uuid=app_id).filter(user=user_obj)
+    healthcheck_statuses = await HealthCheckStatus.all().filter(health_check=healthcheck)
+    if healthcheck_statuses == []:
+        return []
+    return healthcheck_statuses
+
+## Logger stuff
+
+# http://127.0.0.1:8000/app-logging/18ff372e-8eb9-49ff-a835-2c602309f0bd?app_name=test
+@app.post("/app-logging/{app_id}")
+async def create_logger(logger_config: LoggerConfig, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+    logger_app = await Logger.create(name=logger_config.app_name,
+                                     user=user_obj,
+                                     uuid=app_id)
+
+    raise HTTPException(
+        status_code=status.HTTP_201_CREATED,
+        detail="Logger app created",
+    )
+
+
+@app.post("/app-logging-status/{app_id}")
+async def create_logger_status(logger_config: LoggerStatusConfig, app_id: UUID):
+    '''
+    logger_config: {
+        device_id: str,
+        severity_level: int,
+        message: str}
+    '''
+
+    logger_app = await Logger.get(uuid=app_id)
+    if logger_app is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Logger doesn't exist",
+        )
+    logger_status = await LoggerStatus.create(device_id=logger_config.device_id,
+                                              severity_level=logger_config.severity_level,
+                                              message=logger_config.message,
+                                              logger=logger_app)
+
+    raise HTTPException(
+        status_code=status.HTTP_201_CREATED,
+        detail="Logger stattus added",
+    )
+
+
+@app.get("/app-logging/{app_id}")
+async def list_logger_statuses(app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+
+    logger_app = await Logger.get(uuid=app_id).filter(user=user_obj)
+    if logger_app is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Logger doesn't exist",
+        )
+    logger_statuses = await LoggerStatus.all().filter(logger=logger_app)
+    if logger_statuses == []:
+        return []
+    return logger_statuses
+
+
+@app.get("/apps-log")
+async def list_loggers(current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+    loggers = await Logger.all().filter(user=user_obj)
+    if loggers == []:
+        return []
+    return loggers
+
+## Monitoring stuff
+@app.post("/app-monitoring/{app_id}")
+async def create_monitoring(app_name: str, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+    monitoring_app = await Monitoring.create(name=app_name,
+                                     user=user_obj,
+                                     uuid=app_id)
+
+    raise HTTPException(
+        status_code=status.HTTP_201_CREATED,
+        detail="Monitoring app created",
+    )
+
+
+@app.get("/app-monitoring-all")
+async def list_monitoring(current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+    monitoring_apps = await Monitoring.all().filter(user=user_obj)
+    if monitoring_apps == []:
+        return {}
+    return monitoring_apps
+
+@app.websocket("/app-monitoring-ws/{app_id}")
+async def monitoring_websocket(websocket: WebSocket, current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+    monitoring_app = await Monitoring.get(uuid=app_id).filter(user=user_obj)
+
+    if monitoring_app is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Monitoring app doesn't exist",
+        )
+    # await websocket.accept()
 
 @app.get("/")
 async def root():
