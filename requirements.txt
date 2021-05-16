@@ -11,3 +11,4 @@ email-validator
 python-jose[cryptography]
 python-dotenv
 fastapi_mail
+pytest
