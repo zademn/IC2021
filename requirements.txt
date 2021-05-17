@@ -13,3 +13,4 @@ python-dotenv
 fastapi_mail
 pytest
 requests
+asynctest
