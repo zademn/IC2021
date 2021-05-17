@@ -10,7 +10,7 @@ from fastapi import (
     WebSocket
 )
 from fastapi.middleware.cors import CORSMiddleware
-from mail import simple_send, conf
+from mail import simple_send
 
 from starlette.responses import JSONResponse
 from starlette.requests import Request
