@@ -65,7 +65,7 @@ async def get_current_active_user(current_user: User_Pydantic = Depends(get_curr
 def valid_password(password: str) -> bool:
     # https://stackoverflow.com/questions/19605150/regex-for-password-must-contain-at-least-eight-characters-at-least-one-number-a
     # at least 8 chars, uppercase, lowercase, number
-    if re.fullmatch(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$', password):
+    if re.fullmatch(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$', password):
         return True
     else:
         return False
