@@ -324,12 +324,12 @@ async def create_monitoring_status(monitoring_config: MonitoringStatusConfig, ap
 
 
 @app.get("/app-mon-status/{app_id}")
-async def get_monitoring_status(app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+async def list_monitoring_statuses(app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
     monitoring_app = await Monitoring.get(uuid=app_id)
     if monitoring_app is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Logger doesn't exist",
+            detail="Monitoring app doesn't exist",
         )
     monitoring_statuses = await MonitoringStatus.all().order_by("timestamp")
     if len(monitoring_statuses) == 0:
