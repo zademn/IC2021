@@ -19,10 +19,10 @@ from pydantic import EmailStr, BaseModel
 from typing import List
 from fastapi_mail.email_utils import DefaultChecker
 
-from fastapi import FastAPI, HTTPException, Response, status, Depends, Header
+from fastapi import FastAPI, HTTPException, Response, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
-from models import (User_Pydantic, User, Status, UserIn, Token, EmailSchema,
-                    HealthCheck, HealthCheckConfig, HealthCheckStatus, Monitoring, Logger, LoggerStatusConfig, LoggerStatus, LoggerConfig)
+from models import (MonitoringConfig, MonitoringStatus, MonitoringStatusConfig, User_Pydantic, User, UserIn, Token, EmailSchema,
+                    HealthCheck, HealthCheckConfig, HealthCheckStatus, Monitoring, MonitoringStatus, MonitoringConfig, MonitoringStatusConfig, Logger, LoggerStatusConfig, LoggerStatus, LoggerConfig)
 from crypto import valid_password, hash_password, verify_password
 from crypto import create_access_token, get_current_active_user
 from uuid import UUID
@@ -30,12 +30,8 @@ import time
 import asyncio
 
 from datetime import datetime, timedelta
-
-
 from tortoise.contrib.fastapi import HTTPNotFoundError, register_tortoise
-
 from db_check import check_db_every_x_seconds, clean_late_entries
-
 app = FastAPI(title="Tortoise ORM FastAPI example")
 
 origins = [
@@ -256,7 +252,7 @@ async def create_logger_status(logger_config: LoggerStatusConfig, app_id: UUID):
 
     raise HTTPException(
         status_code=status.HTTP_201_CREATED,
-        detail="Logger stattus added",
+        detail="Logger status added",
     )
 
 
@@ -287,10 +283,10 @@ async def list_loggers(current_user: User_Pydantic = Depends(get_current_active_
 # Monitoring stuff
 
 
-@app.post("/app-monitoring/{app_id}")
-async def create_monitoring(app_name: str, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+@app.post("/app-mon/{app_id}")
+async def create_monitoring(monitoring_config: MonitoringConfig, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
     user_obj = await User.get(id=current_user.id)
-    monitoring_app = await Monitoring.create(name=app_name,
+    monitoring_app = await Monitoring.create(name=monitoring_config.app_name,
                                              user=user_obj,
                                              uuid=app_id)
 
@@ -300,7 +296,7 @@ async def create_monitoring(app_name: str, app_id: UUID, current_user: User_Pyda
     )
 
 
-@app.get("/app-monitoring-all")
+@app.get("/apps-mon")
 async def list_monitoring(current_user: User_Pydantic = Depends(get_current_active_user)):
     user_obj = await User.get(id=current_user.id)
     monitoring_apps = await Monitoring.all().filter(user=user_obj)
@@ -309,17 +305,36 @@ async def list_monitoring(current_user: User_Pydantic = Depends(get_current_acti
     return monitoring_apps
 
 
-@app.websocket("/app-monitoring-ws/{app_id}")
-async def monitoring_websocket(websocket: WebSocket, current_user: User_Pydantic = Depends(get_current_active_user)):
-    user_obj = await User.get(id=current_user.id)
-    monitoring_app = await Monitoring.get(uuid=app_id).filter(user=user_obj)
-
+@app.post("/app-mon-status/{app_id}")
+async def create_monitoring_status(monitoring_config: MonitoringStatusConfig, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+    monitoring_app = await Monitoring.get(uuid=app_id)
     if monitoring_app is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Monitoring app doesn't exist",
+            detail="Logger doesn't exist",
         )
-    # await websocket.accept()
+    monitoring_statuses = await MonitoringStatus.all().order_by("timestamp")
+    monitoring_status = await MonitoringStatus.create(cpu=monitoring_config.cpu,
+                                                      monitoring=monitoring_app)
+
+    raise HTTPException(
+        status_code=status.HTTP_201_CREATED,
+        detail="Monitoring status added",
+    )
+
+
+@app.get("/app-mon-status/{app_id}")
+async def get_monitoring_status(app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+    monitoring_app = await Monitoring.get(uuid=app_id)
+    if monitoring_app is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Logger doesn't exist",
+        )
+    monitoring_statuses = await MonitoringStatus.all().order_by("timestamp")
+    if len(monitoring_statuses) == 0:
+        return {}
+    return monitoring_statuses
 
 
 @app.get("/")

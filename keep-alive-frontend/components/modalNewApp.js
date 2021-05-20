@@ -98,6 +98,29 @@ export default function ModalNewApp({ cookieToken }) {
             setAppCreateStatus("blue");
           }, 1000);
         });
+    } else if (appType === "Monitoring") {
+      let monitoringConfig = {
+        app_name: appName,
+      };
+      console.log(appName, appURLvalue.replace("app", "app-mon"));
+      axios
+        .post(appURLvalue.replace("app", "app-mon"), monitoringConfig, {
+          headers: {
+            Authorization: cookieToken,
+          },
+        })
+        .then((res) => {
+          setAppCreateStatus("green");
+          setTimeout(() => {
+            setAppCreateStatus("blue");
+          }, 1000);
+        })
+        .catch((err) => {
+          setAppCreateStatus("red");
+          setTimeout(() => {
+            setAppCreateStatus("blue");
+          }, 1000);
+        });
     }
   };
 
@@ -289,7 +312,34 @@ Invoke-RestMethod ${appURLvalue}
                 </Tabs>
               </FormControl>
             ) : null}
-            {appType == "Monitoring" ? null : null}
+            {appType == "Monitoring" ? (
+              <FormControl mt={4}>
+                <FormLabel>
+                  Keep this check up by making POST requests to this url:
+                </FormLabel>
+                <Flex mb={2}>
+                  <Input
+                    value={appURLvalue.replace("app", "app-monitoring")}
+                    isReadOnly
+                    placeholder="Welcome"
+                  />
+                  <Button onClick={onCopy} ml={2}>
+                    {hasCopied ? "Copied" : "Copy"}
+                  </Button>
+                </Flex>
+                <FormLabel mt={4}>
+                  This monitoring app keeps track of different resources
+                </FormLabel>
+                <pre style={{ whiteSpace: "pre-wrap" }}>
+                  {`
+curl --header "Content-Type: application/json" \
+--request POST \
+--data '{"device_id":"name_or_ip","severity_level":1,"message":"my custom message"}' \
+${appURLvalue.replace("app", "app-logging")}
+                      `}
+                </pre>
+              </FormControl>
+            ) : null}
             {appType == "Logging" ? (
               <FormControl mt={4}>
                 <FormLabel>

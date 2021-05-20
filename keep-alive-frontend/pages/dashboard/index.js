@@ -126,7 +126,7 @@ export default function Dashboard() {
   const [monAppsStatuses, setMonAppsStatuses] = useState(null);
   function getMonStatuses(app_id) {
     axios
-      .get(`${process.env.backend}/apps-mon-status/${app_id}`, {
+      .get(`${process.env.backend}/app-mon-status/${app_id}`, {
         headers: {
           Authorization: cookie.token,
         },
@@ -256,7 +256,20 @@ export default function Dashboard() {
                 <MenuGroup title="Monitoring">
                   {monApps !== null
                     ? monApps.map((monApp) => {
-                        return <MenuItem>{monApp.name}</MenuItem>;
+                        return (
+                          <MenuItem
+                            onClick={() => {
+                              getMonStatuses(monApp.uuid);
+                              setCurrentSelectedApp({
+                                app_type: "Monitoring",
+                                name: monApp.name,
+                                id: monApp.uuid,
+                              });
+                            }}
+                          >
+                            {monApp.name}
+                          </MenuItem>
+                        );
                       })
                     : ""}
                 </MenuGroup>

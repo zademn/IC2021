@@ -116,9 +116,23 @@ Monitoring_Pydantic = pydantic_model_creator(
     Monitoring, name="Monitoring", exclude=('created_at', 'modified_at'))
 
 
+class MonitoringStatus(models.Model):
+    # Data stuff
+    id = fields.IntField(pk=True)
+    timestamp = fields.DatetimeField(auto_now_add=True)
+    cpu = fields.FloatField()
+    # Relations
+    monitoring: fields.ForeignKeyRelation[Monitoring] = fields.ForeignKeyField(
+        "models.Monitoring")
+
+
+MonitoringStatus_Pydantic = pydantic_model_creator(
+    MonitoringStatus, name="MonitoringStatus")
+
+
 class Logger(models.Model):
     '''
-    Logger class
+    Logger model
     '''
     id = fields.IntField(pk=True)
     uuid = fields.UUIDField()
@@ -175,3 +189,9 @@ class HealthCheckConfig(BaseModel):
     app_name: str
     period: int
     grace: int
+
+class MonitoringConfig(BaseModel):
+    app_name: str
+    
+class MonitoringStatusConfig(BaseModel):
+    cpu: float
