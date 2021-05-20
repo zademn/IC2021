@@ -1,6 +1,7 @@
 import Header from "../../components/header";
 import DataTable from "../../components/DataTable";
 import ModalNewApp from "../../components/modalNewApp.js";
+//import PlotMon from "../../components/plot.js";
 import { Box, Button, Text, Center } from "@chakra-ui/react";
 import Link from "next/link";
 import { Context } from "../../context";
@@ -27,6 +28,7 @@ import {
   MenuGroup,
   MenuDivider,
 } from "@chakra-ui/react";
+import useSWR, { mutate } from "swr";
 
 function getExpiryDateToken(token) {
   // Split token at .
@@ -48,6 +50,15 @@ function getUserEmail(token) {
     return "";
   }
 }
+
+const fetcher = (url, token) =>
+  axios
+    .get(url, {
+      headers: {
+        Authorization: token,
+      },
+    })
+    .then((res) => res.data);
 
 export default function Dashboard() {
   const [cookie, setCookie] = useCookies(["token"]);
@@ -109,6 +120,9 @@ export default function Dashboard() {
   // -------------------------------------------- get monitoring
 
   const [monApps, setMonApps] = useState(null);
+  const [appIdMon, setAppIdMon] = useState(null);
+
+  // Get Monitoring apps
   useEffect(() => {
     axios
       .get(`${process.env.backend}/apps-mon`, {
@@ -123,21 +137,24 @@ export default function Dashboard() {
       })
       .catch((err) => {});
   }, [fetchApps]);
+
+  // Get monitoring app data
   const [monAppsStatuses, setMonAppsStatuses] = useState(null);
   function getMonStatuses(app_id) {
-    axios
-      .get(`${process.env.backend}/app-mon-status/${app_id}`, {
-        headers: {
-          Authorization: cookie.token,
-        },
-      })
-      .then((res) => {
-        setHcAppsStatuses(null);
-        setLogAppsStatuses(null);
-        setMonAppsStatuses(res.data);
-      })
-      .catch((err) => {});
+    setHcAppsStatuses(null);
+    setLogAppsStatuses(null);
+    setAppIdMon(app_id);
   }
+  const { data, error } = useSWR(
+    appIdMon
+      ? [`${process.env.backend}/app-mon-status/${appIdMon}`, cookie.token]
+      : null,
+    fetcher,
+    {
+      refreshInterval: 1000,
+    }
+  );
+
   // -------------------------------------------- get logging
 
   const [logApps, setLogApps] = useState(null);
@@ -367,6 +384,12 @@ export default function Dashboard() {
               };
             })}
           />
+        ) : null}
+        {monAppsStatuses ? (
+          <div>
+            CPU
+            {/* <PlotMon></PlotMon> */}
+          </div>
         ) : null}
       </VStack>
     </Box>
