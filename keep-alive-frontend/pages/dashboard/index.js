@@ -111,7 +111,7 @@ export default function Dashboard() {
       })
       .then((res) => {
         setLogAppsStatuses(null);
-        setMonAppsStatuses(null);
+        setAppIdMon(null);
         setHcAppsStatuses(res.data);
       })
       .catch((err) => {});
@@ -139,13 +139,12 @@ export default function Dashboard() {
   }, [fetchApps]);
 
   // Get monitoring app data
-  const [monAppsStatuses, setMonAppsStatuses] = useState(null);
   function getMonStatuses(app_id) {
     setHcAppsStatuses(null);
     setLogAppsStatuses(null);
     setAppIdMon(app_id);
   }
-  const { data, error } = useSWR(
+  const { data: monAppsStatuses, error } = useSWR(
     appIdMon
       ? [`${process.env.backend}/app-mon-status/${appIdMon}`, cookie.token]
       : null,
@@ -177,8 +176,8 @@ export default function Dashboard() {
         },
       })
       .then((res) => {
-        setMonAppsStatuses(null);
         setHcAppsStatuses(null);
+        setAppIdMon(null);
         setLogAppsStatuses(res.data);
       })
       .catch((err) => {});
@@ -385,11 +384,10 @@ export default function Dashboard() {
             })}
           />
         ) : null}
+        {/* {error ? <div>failed to load</div> : null}
+        {!monAppsStatuses ? <div>Loading...</div> : null} */}
         {monAppsStatuses ? (
-          <div>
-            CPU
-            {/* <PlotMon></PlotMon> */}
-          </div>
+          <div>{JSON.stringify(monAppsStatuses, null, 2)}</div>
         ) : null}
       </VStack>
     </Box>
