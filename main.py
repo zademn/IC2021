@@ -313,7 +313,9 @@ async def create_monitoring_status(monitoring_config: MonitoringStatusConfig, ap
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Logger doesn't exist",
         )
-    monitoring_statuses = await MonitoringStatus.all().order_by("timestamp")
+    monitoring_statuses = await MonitoringStatus.all().filter(monitoring=monitoring_app).order_by("timestamp")
+    if (len(monitoring_statuses) > 10):
+        await monitoring_statuses[0].delete()
     monitoring_status = await MonitoringStatus.create(cpu=monitoring_config.cpu,
                                                       monitoring=monitoring_app)
 
@@ -331,7 +333,8 @@ async def list_monitoring_statuses(app_id: UUID, current_user: User_Pydantic = D
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Monitoring app doesn't exist",
         )
-    monitoring_statuses = await MonitoringStatus.all().order_by("timestamp")
+    monitoring_statuses = await MonitoringStatus.all().filter(monitoring=monitoring_app).order_by("timestamp")
+
     if len(monitoring_statuses) == 0:
         return {}
     return monitoring_statuses

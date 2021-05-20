@@ -29,6 +29,7 @@ import {
   MenuDivider,
 } from "@chakra-ui/react";
 import useSWR, { mutate } from "swr";
+import PlotMon from "../../components/plot";
 
 function getExpiryDateToken(token) {
   // Split token at .
@@ -387,7 +388,9 @@ export default function Dashboard() {
         {/* {error ? <div>failed to load</div> : null}
         {!monAppsStatuses ? <div>Loading...</div> : null} */}
         {monAppsStatuses ? (
-          <div>{JSON.stringify(monAppsStatuses, null, 2)}</div>
+          <div>
+            <PlotMon data={monAppsStatuses} />
+          </div>
         ) : null}
       </VStack>
     </Box>
