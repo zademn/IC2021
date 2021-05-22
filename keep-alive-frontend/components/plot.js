@@ -2,22 +2,15 @@ import React, { useEffect, useState } from "react";
 import { ResponsiveLine } from "@nivo/line";
 
 export default function PlotMon(data) {
+  console.log(data);
   if (!data || JSON.stringify(data.data) === JSON.stringify({})) {
     return <div>No data to show</div>;
   }
 
-  let [plotData, setPlotData] = useState(null);
-  useEffect(() => {
-    let data_temp = data.data.map((d) => {
-      return { x: d.timestamp.split("T")[1].split(".")[0], y: d.cpu };
-    });
-    setPlotData([{ id: "cpu", color: "hsl(38, 70%, 50%)", data: data_temp }]);
-  }, [data]);
-
   return (
     <div style={{ height: "640px" }}>
       <ResponsiveLine
-        data={plotData}
+        data={data.data}
         margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
         xScale={{ type: "point" }}
         yScale={{

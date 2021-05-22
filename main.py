@@ -32,6 +32,12 @@ import asyncio
 from datetime import datetime, timedelta
 from tortoise.contrib.fastapi import HTTPNotFoundError, register_tortoise
 from db_check import check_db_every_x_seconds, clean_late_entries
+import datetime
+import time
+
+COLORS = ["hsl(58, 70%, 50%)",
+          "hsl(114, 70%, 50%)",
+          "hsl(66, 70%, 50%)"]
 app = FastAPI(title="Tortoise ORM FastAPI example")
 
 origins = [
@@ -334,23 +340,26 @@ async def list_monitoring_statuses(app_id: UUID, current_user: User_Pydantic = D
             detail="Monitoring app doesn't exist",
         )
     monitoring_statuses = await MonitoringStatus.all().filter(monitoring=monitoring_app).order_by("timestamp")
-
     if len(monitoring_statuses) == 0:
         return {}
-    return monitoring_statuses
+    times = [x.timestamp.strftime("%H:%M:%S")
+             for x in list(monitoring_statuses)]
+    cpus = [x.cpu for x in list(monitoring_statuses)]
+    data = [{"id": "cpu", "color": COLORS[0], "data": [{"x": x, "y": y} for x, y in zip(times, cpus)]}]
+    return data
 
 
-@app.get("/")
+@ app.get("/")
 async def root():
     return Response(content="OK", media_type="text/plain")
 
 
 html = """
-<p>merge?</p> 
+<p>merge?</p>
 """
 
 
-@app.post("/email")
+@ app.post("/email")
 async def send_email(
     email: EmailSchema
 ) -> JSONResponse:
