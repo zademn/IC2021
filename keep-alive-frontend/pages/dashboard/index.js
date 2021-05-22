@@ -271,7 +271,8 @@ export default function Dashboard() {
                 </MenuGroup>
                 <MenuDivider />
                 <MenuGroup title="Monitoring">
-                  {monApps !== null
+                  {monApps !== null &&
+                  JSON.stringify(monApps) !== JSON.stringify({})
                     ? monApps.map((monApp) => {
                         return (
                           <MenuItem
@@ -327,6 +328,15 @@ export default function Dashboard() {
               {currentSelectedApp.app_type === "Logging" &&
                 `${process.env.backend}/app-logging-status/${currentSelectedApp?.id}`}
             </Text>
+            {currentSelectedApp.app_type === "Logging" && (
+              <code>{`Make a post request with this body to the link
+              {
+                device_id: "string",
+                severity_level: int,
+                message: "string"
+              }
+              `}</code>
+            )}
           </Box>
         )}
 
