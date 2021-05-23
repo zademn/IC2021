@@ -330,14 +330,33 @@ Invoke-RestMethod ${appURLvalue}
                 <FormLabel mt={4}>
                   This monitoring app keeps track of different resources
                 </FormLabel>
-                <pre style={{ whiteSpace: "pre-wrap" }}>
-                  {`
-curl --header "Content-Type: application/json" \
---request POST \
---data '{"device_id":"name_or_ip","severity_level":1,"message":"my custom message"}' \
-${appURLvalue.replace("app", "app-logging")}
-                      `}
-                </pre>
+                <Tabs isFitted variant="enclosed" size="md">
+                  <TabList mb="1em">
+                    <Tab>Python</Tab>
+                  </TabList>
+                  <TabPanels>
+                    <TabPanel>
+                      <pre style={{ whiteSpace: "pre-wrap" }}>
+                        {`
+import psutil
+import time
+import requests
+import json
+url = "${appURLvalue.replace("app", "app-monitoring")}"
+while True:
+    cpu = psutil.cpu_percent(interval=None)
+    memory = psutil.virtual_memory().percent
+    print(memory)
+    time.sleep(2)
+    r = requests.post(url, data=json.dumps({"cpu": cpu, 'memory': memory}), headers={'accept': 'application/json',
+                                                                                     'Content-Type': 'application/json'})
+    print(r.json)
+
+                        `}
+                      </pre>
+                    </TabPanel>
+                  </TabPanels>
+                </Tabs>
               </FormControl>
             ) : null}
             {appType == "Logging" ? (
