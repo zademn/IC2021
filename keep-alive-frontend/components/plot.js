@@ -15,9 +15,9 @@ export default function PlotMon(data) {
         xScale={{ type: "point" }}
         yScale={{
           type: "linear",
-          min: "auto",
-          max: "auto",
-          stacked: true,
+          min: 0,
+          max: 100,
+          stacked: false,
           reverse: false,
         }}
         yFormat=" >-.2f"
@@ -37,7 +37,7 @@ export default function PlotMon(data) {
           tickSize: 5,
           tickPadding: 5,
           tickRotation: 0,
-          legend: "percent",
+          legend: "Percent",
           legendOffset: -40,
           legendPosition: "middle",
         }}
@@ -47,6 +47,7 @@ export default function PlotMon(data) {
         pointBorderColor={{ from: "serieColor" }}
         pointLabelYOffset={-12}
         useMesh={true}
+        enablePointLabel={true}
         legends={[
           {
             anchor: "bottom-right",

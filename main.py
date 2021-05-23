@@ -232,7 +232,7 @@ async def create_logger(logger_config: LoggerConfig, app_id: UUID, current_user:
 
     raise HTTPException(
         status_code=status.HTTP_201_CREATED,
-        detail="Logger app created",
+        detail=f"Logger app created: {dict(name = logger_app.name)}",
     )
 
 
@@ -258,7 +258,7 @@ async def create_logger_status(logger_config: LoggerStatusConfig, app_id: UUID):
 
     raise HTTPException(
         status_code=status.HTTP_201_CREATED,
-        detail="Logger status added",
+        detail=f"Logger status added: {dict(device = logger_status.device, severity_level = logger_status.severity_level, message = logger_status.message)}",
     )
 
 
@@ -298,7 +298,7 @@ async def create_monitoring(monitoring_config: MonitoringConfig, app_id: UUID, c
 
     raise HTTPException(
         status_code=status.HTTP_201_CREATED,
-        detail="Monitoring app created",
+        detail=f"Monitoring app created: {dict(name = monitoring_app.name)}",
     )
 
 
@@ -312,7 +312,7 @@ async def list_monitoring(current_user: User_Pydantic = Depends(get_current_acti
 
 
 @app.post("/app-mon-status/{app_id}")
-async def create_monitoring_status(monitoring_config: MonitoringStatusConfig, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+async def create_monitoring_status(monitoring_config: MonitoringStatusConfig, app_id: UUID):
     monitoring_app = await Monitoring.get(uuid=app_id)
     if monitoring_app is None:
         raise HTTPException(
@@ -323,16 +323,17 @@ async def create_monitoring_status(monitoring_config: MonitoringStatusConfig, ap
     if (len(monitoring_statuses) > 10):
         await monitoring_statuses[0].delete()
     monitoring_status = await MonitoringStatus.create(cpu=monitoring_config.cpu,
+                                                      memory=monitoring_config.memory,
                                                       monitoring=monitoring_app)
 
     raise HTTPException(
         status_code=status.HTTP_201_CREATED,
-        detail="Monitoring status added",
+        detail=f"Monitoring status added: {dict(cpu= monitoring_status.cpu, memory= monitoring_status.memory)}",
     )
 
 
 @app.get("/app-mon-status/{app_id}")
-async def list_monitoring_statuses(app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+async def list_monitoring_statuses(app_id: UUID):
     monitoring_app = await Monitoring.get(uuid=app_id)
     if monitoring_app is None:
         raise HTTPException(
@@ -345,7 +346,11 @@ async def list_monitoring_statuses(app_id: UUID, current_user: User_Pydantic = D
     times = [x.timestamp.strftime("%H:%M:%S")
              for x in list(monitoring_statuses)]
     cpus = [x.cpu for x in list(monitoring_statuses)]
-    data = [{"id": "cpu", "color": COLORS[0], "data": [{"x": x, "y": y} for x, y in zip(times, cpus)]}]
+    memory = [x.memory for x in list(monitoring_statuses)]
+    data = [{"id": "cpu", "color": COLORS[0], "data": [
+        {"x": x, "y": y} for x, y in zip(times, cpus)]},
+        {"id": "memory", "color": COLORS[1], "data": [
+            {"x": x, "y": y} for x, y in zip(times, memory)]}]
     return data
 
 

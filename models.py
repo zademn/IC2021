@@ -121,6 +121,7 @@ class MonitoringStatus(models.Model):
     id = fields.IntField(pk=True)
     timestamp = fields.DatetimeField(auto_now_add=True)
     cpu = fields.FloatField()
+    memory = fields.FloatField()
     # Relations
     monitoring: fields.ForeignKeyRelation[Monitoring] = fields.ForeignKeyField(
         "models.Monitoring")
@@ -190,8 +191,11 @@ class HealthCheckConfig(BaseModel):
     period: int
     grace: int
 
+
 class MonitoringConfig(BaseModel):
     app_name: str
-    
+
+
 class MonitoringStatusConfig(BaseModel):
     cpu: float
+    memory: float
