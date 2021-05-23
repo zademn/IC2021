@@ -2,7 +2,7 @@ import Header from "../../components/header";
 import DataTable from "../../components/DataTable";
 import ModalNewApp from "../../components/modalNewApp.js";
 //import PlotMon from "../../components/plot.js";
-import { Box, Button, Text, Center } from "@chakra-ui/react";
+import { Box, Button, Text, Center, AlertDialog } from "@chakra-ui/react";
 import Link from "next/link";
 import { Context } from "../../context";
 import { useContext, useEffect, useState } from "react";
@@ -30,6 +30,7 @@ import {
 } from "@chakra-ui/react";
 import useSWR, { mutate } from "swr";
 import PlotMon from "../../components/plot";
+import AlertDelete from "../../components/AlertDelete";
 
 function getExpiryDateToken(token) {
   // Split token at .
@@ -320,9 +321,14 @@ export default function Dashboard() {
         {currentSelectedApp === null ? null : (
           <Box mt="10">
             <Text fontWeight="bold" fontSize="xl">
-              {currentSelectedApp?.name}{" "}
+              {currentSelectedApp?.name}
+              <Box as="span" ml={2}>
+                {currentSelectedApp?.id && (
+                  <AlertDelete app_id={currentSelectedApp.id} />
+                )}
+              </Box>
             </Text>
-            <Text fontWeight="bold" fontSize="xl" bg="blue.800">
+            <Text fontWeight="bold" fontSize="xl" bg="blue.800" mt={2}>
               {currentSelectedApp.app_type === "HealthCheck" &&
                 `${process.env.backend}/app/${currentSelectedApp?.id}`}
               {currentSelectedApp.app_type === "Logging" &&
