@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { ResponsiveLine } from "@nivo/line";
 
 export default function PlotMon(data) {
-  console.log(data);
   if (!data || JSON.stringify(data.data) === JSON.stringify({})) {
     return <div>No data to show</div>;
   }
