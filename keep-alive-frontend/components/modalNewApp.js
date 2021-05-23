@@ -386,7 +386,7 @@ while True:
                   </Button>
                 </Flex>
                 <FormLabel mt={4}>
-                  Notify me when the request goes below:
+                  Notify me when the severity is less than or equal to (0=None):
                 </FormLabel>
                 <NumberInput
                   defaultValue={0}
@@ -407,7 +407,7 @@ while True:
                 </FormLabel>
                 <FormLabel>
                   Severity is the severity level of the log, usually between 1
-                  and 7
+                  and 10
                 </FormLabel>
                 <FormLabel>
                   The message can be anything related to this event
