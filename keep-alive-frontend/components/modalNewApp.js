@@ -113,7 +113,6 @@ export default function ModalNewApp({ cookieToken }) {
       let monitoringConfig = {
         app_name: appName,
       };
-      console.log(appName, appURLvalue.replace("app", "app-mon"));
       axios
         .post(appURLvalue.replace("app", "app-mon"), monitoringConfig, {
           headers: {
@@ -330,7 +329,7 @@ Invoke-RestMethod ${appURLvalue}
                 </FormLabel>
                 <Flex mb={2}>
                   <Input
-                    value={appURLvalue.replace("app", "app-monitoring")}
+                    value={appURLvalue.replace("app", "app-mon-status")}
                     isReadOnly
                     placeholder="Welcome"
                   />
@@ -353,7 +352,7 @@ import psutil
 import time
 import requests
 import json
-url = "${appURLvalue.replace("app", "app-monitoring")}"
+url = "${appURLvalue.replace("app", "app-mon-status")}"
 while True:
     cpu = psutil.cpu_percent(interval=None)
     memory = psutil.virtual_memory().percent
@@ -386,7 +385,8 @@ while True:
                   </Button>
                 </Flex>
                 <FormLabel mt={4}>
-                  Notify me when the severity is greater than or equal to (0=None):
+                  Notify me when the severity is greater than or equal to
+                  (0=None):
                 </FormLabel>
                 <NumberInput
                   defaultValue={0}
@@ -417,7 +417,7 @@ while True:
 curl --header "Content-Type: application/json" \
 --request POST \
 --data '{"device_id":"name_or_ip","severity_level":1,"message":"my custom message"}' \
-${appURLvalue.replace("app", "app-logging")}
+${appURLvalue.replace("app", "app-logging-status")}
                       `}
                 </pre>
               </FormControl>

@@ -7,6 +7,31 @@ export default function PlotMon(data) {
     return <div>No data to show</div>;
   }
 
+  const theme = {
+    textColor: "#fff",
+    fontSize: 16,
+    axis: {
+      domain: {
+        line: {
+          stroke: "#777777",
+          strokeWidth: 1,
+        },
+      },
+      ticks: {
+        line: {
+          stroke: "#777777",
+          strokeWidth: 1,
+        },
+      },
+    },
+    grid: {
+      line: {
+        stroke: "#444444",
+        strokeWidth: 1,
+      },
+    },
+  };
+
   return (
     <div style={{ height: "640px" }}>
       <ResponsiveLine
@@ -48,6 +73,7 @@ export default function PlotMon(data) {
         pointLabelYOffset={-12}
         useMesh={true}
         enablePointLabel={true}
+        theme={theme}
         legends={[
           {
             anchor: "bottom-right",
