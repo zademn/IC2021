@@ -151,7 +151,7 @@ async def create_app(health_check_config: HealthCheckConfig, app_id: UUID, curre
                                             period=health_check_config.period,
                                             grace=health_check_config.grace)
 
-    current_time = datetime.now()
+    current_time = datetime.datetime.now()
     next_receive = current_time + \
         timedelta(minutes=health_check_config.period+health_check_config.grace)
 
@@ -345,7 +345,8 @@ async def list_monitoring_statuses(app_id: UUID, current_user: User_Pydantic = D
     times = [x.timestamp.strftime("%H:%M:%S")
              for x in list(monitoring_statuses)]
     cpus = [x.cpu for x in list(monitoring_statuses)]
-    data = [{"id": "cpu", "color": COLORS[0], "data": [{"x": x, "y": y} for x, y in zip(times, cpus)]}]
+    data = [{"id": "cpu", "color": COLORS[0], "data": [
+        {"x": x, "y": y} for x, y in zip(times, cpus)]}]
     return data
 
 
