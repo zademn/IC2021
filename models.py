@@ -92,7 +92,7 @@ class HealthCheckStatus(models.Model):
 
     # Relations
     health_check: fields.ForeignKeyRelation[HealthCheck] = fields.ForeignKeyField(
-        "models.HealthCheck")
+        "models.HealthCheck", on_delete='CASCADE')
 
 
 HealthCheckStatus_Pydantic = pydantic_model_creator(
@@ -124,7 +124,7 @@ class MonitoringStatus(models.Model):
     memory = fields.FloatField()
     # Relations
     monitoring: fields.ForeignKeyRelation[Monitoring] = fields.ForeignKeyField(
-        "models.Monitoring")
+        "models.Monitoring", on_delete='CASCADE')
 
 
 MonitoringStatus_Pydantic = pydantic_model_creator(
@@ -163,7 +163,7 @@ class LoggerStatus(models.Model):
 
     # Relations
     logger: fields.ForeignKeyRelation[Logger] = fields.ForeignKeyField(
-        "models.Logger")
+        "models.Logger", on_delete='CASCADE')
 
 
 LoggerStatus_Pydantic = pydantic_model_creator(

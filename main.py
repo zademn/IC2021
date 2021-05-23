@@ -1,3 +1,4 @@
+from logging import log
 from typing import List, Optional
 
 from fastapi import (
@@ -300,6 +301,34 @@ async def create_monitoring(monitoring_config: MonitoringConfig, app_id: UUID, c
         status_code=status.HTTP_201_CREATED,
         detail=f"Monitoring app created: {dict(name = monitoring_app.name)}",
     )
+
+
+@app.delete("/app-delete/{app_id}")
+async def delete_app(app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+    print("hello")
+    hc_app_exists = await HealthCheck.get(uuid=app_id).filter(user=user_obj).exists()
+    if hc_app_exists:
+        await HealthCheck.get(uuid=app_id).filter(user=user_obj).delete()
+        raise HTTPException(
+            status_code=status.HTTP_201_CREATED,
+            detail=f"Healthcheck app deleted",
+        )
+    monitoring_app_exists = await Monitoring.get(uuid=app_id).filter(user=user_obj).exists()
+    if monitoring_app_exists:
+        await Monitoring.get(uuid=app_id).filter(user=user_obj).delete()
+        raise HTTPException(
+            status_code=status.HTTP_201_CREATED,
+            detail=f"Monitoring app deleted",
+        )
+
+    logger_app_exists = await Logger.get(uuid=app_id).filter(user=user_obj).exists()
+    if logger_app_exists:
+        await Logger.get(uuid=app_id).filter(user=user_obj).delete()
+        raise HTTPException(
+            status_code=status.HTTP_201_CREATED,
+            detail=f"Logger app deleted",
+        )
 
 
 @app.get("/apps-mon")
