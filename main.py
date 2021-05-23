@@ -151,7 +151,7 @@ async def create_app(health_check_config: HealthCheckConfig, app_id: UUID, curre
                                             period=health_check_config.period,
                                             grace=health_check_config.grace)
 
-    current_time = datetime.now()
+    current_time = datetime.datetime.now()
     next_receive = current_time + \
         timedelta(minutes=health_check_config.period+health_check_config.grace)
 

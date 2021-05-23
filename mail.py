@@ -17,6 +17,7 @@ import os
 
 load_dotenv()
 
+
 conf = ConnectionConfig(
     MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
     MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
@@ -25,14 +26,14 @@ conf = ConnectionConfig(
     MAIL_SERVER=os.getenv("MAIL_SERVER"),
     MAIL_FROM_NAME=os.getenv("MAIL_FROM_NAME"),
     MAIL_TLS=True if os.getenv("MAIL_TLS") == "True" else False,
-    MAIL_SSL=True if os.getenv("MAIL_SSL") == "False" else False,
+    MAIL_SSL=True if os.getenv("MAIL_SSL") == "True" else False,
 )
 
 
-async def simple_send(emails, content):
+async def simple_send(emails, content, subject):
 
     message = MessageSchema(
-        subject="yes",
+        subject=subject,
         recipients=emails,
         body=content,
         subtype="html"
