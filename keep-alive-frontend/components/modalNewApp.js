@@ -15,6 +15,13 @@ import {
   Flex,
   Code,
 } from "@chakra-ui/react";
+import {
+  NumberInput,
+  NumberInputField,
+  NumberInputStepper,
+  NumberIncrementStepper,
+  NumberDecrementStepper,
+} from "@chakra-ui/react";
 
 import { FormControl, FormLabel } from "@chakra-ui/react";
 import { Input } from "@chakra-ui/react";
@@ -31,6 +38,7 @@ export default function ModalNewApp({ cookieToken }) {
   const [appType, setAppType] = useState("");
   const [appName, setAppName] = useState("My Application");
   const [period, setPeriod] = useState(5);
+  const [loggingThreshold, setLoggingThreshold] = useState(0);
   const periodInHours = {
     hours: Math.floor(period / 60),
     minutes: period % 60,
@@ -46,6 +54,9 @@ export default function ModalNewApp({ cookieToken }) {
 
   const changeAppType = (event) => {
     setAppType(event.target.value);
+  };
+  const changeThreshold = (val) => {
+    setLoggingThreshold(val);
   };
   const changeAppName = (event) => {
     setAppName(event.target.value);
@@ -76,9 +87,9 @@ export default function ModalNewApp({ cookieToken }) {
           }, 1000);
         });
     } else if (appType === "Logging") {
-      console.log(appName, appURLvalue.replace("app", "app-logging"));
       let loggerConfig = {
         app_name: appName,
+        severity_threshold: loggingThreshold,
       };
       axios
         .post(appURLvalue.replace("app", "app-logging"), loggerConfig, {
@@ -374,6 +385,21 @@ while True:
                     {hasCopied ? "Copied" : "Copy"}
                   </Button>
                 </Flex>
+                <FormLabel mt={4}>
+                  Notify me when the request goes below:
+                </FormLabel>
+                <NumberInput
+                  defaultValue={0}
+                  min={0}
+                  max={10}
+                  onChange={(val) => changeThreshold(val)}
+                >
+                  <NumberInputField />
+                  <NumberInputStepper>
+                    <NumberIncrementStepper />
+                    <NumberDecrementStepper />
+                  </NumberInputStepper>
+                </NumberInput>
                 <FormLabel mt={4}>Example of JSON body:</FormLabel>
                 <FormLabel>
                   The device_id can be anything that identifies the device, such
