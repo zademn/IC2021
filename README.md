@@ -40,3 +40,13 @@ _temporary architecture_
 # Adding a new app
 ![](images/new_app1.png)
 ![](images/new_app2.png)
+![](images/new_app3.png)
+
+# Checking the status of your devices
+
+## health check
+![](images/example1.png)
+
+## logging
+![](images/example2.png)
+

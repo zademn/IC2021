@@ -1,3 +1,4 @@
+
 from logging import log
 from typing import List, Optional
 
@@ -416,3 +417,4 @@ register_tortoise(
     generate_schemas=True,
     add_exception_handlers=True,
 )
+
