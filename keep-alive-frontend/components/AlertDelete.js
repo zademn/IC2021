@@ -18,18 +18,17 @@ export default function AlertDelete({ app_id }) {
   const [cookie, setCookie] = useCookies(["token"]);
 
   function deleteApp() {
-    console.log(`From ALERT_DELETE ${app_id}`);
 
-    // axios
-    //   .delete(`${process.env.backend}/app-delete/${app_id}`, {
-    //     headers: {
-    //       Authorization: cookie.token,
-    //     },
-    //   })
-    //   .then((res) => {
-    //     setIsOpen(false);
-    //   })
-    //   .catch((err) => {});
+    axios
+      .delete(`${process.env.backend}/app-delete/${app_id}`, {
+        headers: {
+          Authorization: cookie.token,
+        },
+      })
+      .then((res) => {
+        setIsOpen(false);
+      })
+      .catch((err) => {});
   }
 
   return (
