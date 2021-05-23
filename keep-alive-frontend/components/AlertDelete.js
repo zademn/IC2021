@@ -10,7 +10,7 @@ import {
 import { useState, useRef } from "react";
 import axios from "axios";
 import { useCookies } from "react-cookie";
-export default function AlertDelete({ app_id }) {
+export default function AlertDelete({ app_id, setCurrentSelectedApp }) {
   const [isOpen, setIsOpen] = useState(false);
   const onClose = () => setIsOpen(false);
   const cancelRef = useRef();
@@ -18,7 +18,6 @@ export default function AlertDelete({ app_id }) {
   const [cookie, setCookie] = useCookies(["token"]);
 
   function deleteApp() {
-
     axios
       .delete(`${process.env.backend}/app-delete/${app_id}`, {
         headers: {
@@ -27,6 +26,7 @@ export default function AlertDelete({ app_id }) {
       })
       .then((res) => {
         setIsOpen(false);
+        setCurrentSelectedApp(null);
       })
       .catch((err) => {});
   }

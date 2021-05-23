@@ -324,7 +324,10 @@ export default function Dashboard() {
               {currentSelectedApp?.name}
               <Box as="span" ml={2}>
                 {currentSelectedApp?.id && (
-                  <AlertDelete app_id={currentSelectedApp.id} />
+                  <AlertDelete
+                    app_id={currentSelectedApp.id}
+                    setCurrentSelectedApp={setCurrentSelectedApp}
+                  />
                 )}
               </Box>
             </Text>
