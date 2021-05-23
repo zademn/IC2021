@@ -333,6 +333,8 @@ export default function Dashboard() {
                 `${process.env.backend}/app/${currentSelectedApp?.id}`}
               {currentSelectedApp.app_type === "Logging" &&
                 `${process.env.backend}/app-logging-status/${currentSelectedApp?.id}`}
+              {currentSelectedApp.app_type === "Monitoring" &&
+                `${process.env.backend}/app-mon-status/${currentSelectedApp?.id}`}
             </Text>
             {currentSelectedApp.app_type === "Logging" && (
               <code>{`Make a post request with this body to the link
@@ -341,6 +343,11 @@ export default function Dashboard() {
                 severity_level: int,
                 message: "string"
               }
+              `}</code>
+            )}
+            {currentSelectedApp.app_type === "Monitoring" && (
+              <code>{`Make a continous post request with this body to the link
+              {"cpu": cpu, 'memory': memory}
               `}</code>
             )}
           </Box>
