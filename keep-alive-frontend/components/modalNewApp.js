@@ -386,7 +386,7 @@ while True:
                   </Button>
                 </Flex>
                 <FormLabel mt={4}>
-                  Notify me when the severity is less than or equal to (0=None):
+                  Notify me when the severity is greater than or equal to (0=None):
                 </FormLabel>
                 <NumberInput
                   defaultValue={0}

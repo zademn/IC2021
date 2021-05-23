@@ -1,5 +1,5 @@
 import asyncio
-from models import HealthCheckStatus, HealthCheck, User
+from models import HealthCheckStatus, HealthCheck, Logger, LoggerStatus, User
 from datetime import datetime, timedelta
 from mail import simple_send
 

@@ -140,6 +140,7 @@ class Logger(models.Model):
     name = fields.CharField(max_length=128, unique=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     modified_at = fields.DatetimeField(auto_now=True)
+    severity_threshold = fields.IntField()
 
     # Relations
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
@@ -184,6 +185,7 @@ class LoggerStatusConfig(BaseModel):
 
 class LoggerConfig(BaseModel):
     app_name: str
+    severity_threshold: int
 
 
 class HealthCheckConfig(BaseModel):

@@ -229,6 +229,7 @@ async def create_logger(logger_config: LoggerConfig, app_id: UUID, current_user:
     user_obj = await User.get(id=current_user.id)
     logger_app = await Logger.create(name=logger_config.app_name,
                                      user=user_obj,
+                                     severity_threshold=logger_config.severity_threshold,
                                      uuid=app_id)
 
     raise HTTPException(
@@ -257,9 +258,15 @@ async def create_logger_status(logger_config: LoggerStatusConfig, app_id: UUID):
                                               message=logger_config.message,
                                               logger=logger_app)
 
+    if logger_app.severity_threshold != 0 and logger_config.severity_level >= logger_app.severity_threshold:
+        user = await logger_app.user
+        print(user.email)
+        await simple_send([user.email],
+                          f"Your logging applicaton <b>{logger_app.name}</b> has encountered a severe log! At {logger_status.timestamp.strftime('%H:%M:%S')} the device with the id <b>{logger_status.device_id}</b> has received a log with a severity level of <b style=\"color:red;\">{logger_status.severity_level}</b>: <br>{logger_status.message}. <br>Please investigate!",
+                          subject=f"{logger_app.name} severe encounter!.")
     raise HTTPException(
         status_code=status.HTTP_201_CREATED,
-        detail=f"Logger status added: {dict(device = logger_status.device, severity_level = logger_status.severity_level, message = logger_status.message)}",
+        detail=f"Logger status added: {dict(device = logger_status.device_id, severity_level = logger_status.severity_level, message = logger_status.message)}",
     )
 
 
