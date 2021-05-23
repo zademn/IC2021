@@ -1,3 +1,5 @@
+
+from logging import log
 from typing import List, Optional
 
 from fastapi import (
@@ -10,7 +12,7 @@ from fastapi import (
     WebSocket
 )
 from fastapi.middleware.cors import CORSMiddleware
-from mail import simple_send
+from mail import simple_send, conf
 
 from starlette.responses import JSONResponse
 from starlette.requests import Request
@@ -19,10 +21,10 @@ from pydantic import EmailStr, BaseModel
 from typing import List
 from fastapi_mail.email_utils import DefaultChecker
 
-from fastapi import FastAPI, HTTPException, Response, status, Depends, Header
+from fastapi import FastAPI, HTTPException, Response, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
-from models import (User_Pydantic, User, Status, UserIn, Token, EmailSchema,
-                    HealthCheck, HealthCheckConfig, HealthCheckStatus, Monitoring, Logger, LoggerStatusConfig, LoggerStatus, LoggerConfig)
+from models import (MonitoringConfig, MonitoringStatus, MonitoringStatusConfig, User_Pydantic, User, UserIn, Token, EmailSchema,
+                    HealthCheck, HealthCheckConfig, HealthCheckStatus, Monitoring, MonitoringStatus, MonitoringConfig, MonitoringStatusConfig, Logger, LoggerStatusConfig, LoggerStatus, LoggerConfig)
 from crypto import valid_password, hash_password, verify_password
 from crypto import create_access_token, get_current_active_user
 from uuid import UUID
@@ -30,12 +32,14 @@ import time
 import asyncio
 
 from datetime import datetime, timedelta
-
-
 from tortoise.contrib.fastapi import HTTPNotFoundError, register_tortoise
-
 from db_check import check_db_every_x_seconds, clean_late_entries
+import datetime
+import time
 
+COLORS = ["hsl(58, 70%, 50%)",
+          "hsl(114, 70%, 50%)",
+          "hsl(66, 70%, 50%)"]
 app = FastAPI(title="Tortoise ORM FastAPI example")
 
 origins = [
@@ -149,7 +153,7 @@ async def create_app(health_check_config: HealthCheckConfig, app_id: UUID, curre
                                             period=health_check_config.period,
                                             grace=health_check_config.grace)
 
-    current_time = datetime.now()
+    current_time = datetime.datetime.now()
     next_receive = current_time + \
         timedelta(minutes=health_check_config.period+health_check_config.grace)
 
@@ -226,11 +230,12 @@ async def create_logger(logger_config: LoggerConfig, app_id: UUID, current_user:
     user_obj = await User.get(id=current_user.id)
     logger_app = await Logger.create(name=logger_config.app_name,
                                      user=user_obj,
+                                     severity_threshold=logger_config.severity_threshold,
                                      uuid=app_id)
 
     raise HTTPException(
         status_code=status.HTTP_201_CREATED,
-        detail="Logger app created",
+        detail=f"Logger app created: {dict(name = logger_app.name)}",
     )
 
 
@@ -254,9 +259,15 @@ async def create_logger_status(logger_config: LoggerStatusConfig, app_id: UUID):
                                               message=logger_config.message,
                                               logger=logger_app)
 
+    if logger_app.severity_threshold != 0 and logger_config.severity_level >= logger_app.severity_threshold:
+        user = await logger_app.user
+        print(user.email)
+        await simple_send([user.email],
+                          f"Your logging applicaton <b>{logger_app.name}</b> has encountered a severe log! At {logger_status.timestamp.strftime('%H:%M:%S')} the device with the id <b>{logger_status.device_id}</b> has received a log with a severity level of <b style=\"color:red;\">{logger_status.severity_level}</b>: <br>{logger_status.message}. <br>Please investigate!",
+                          subject=f"{logger_app.name} severe encounter!.")
     raise HTTPException(
         status_code=status.HTTP_201_CREATED,
-        detail="Logger stattus added",
+        detail=f"Logger status added: {dict(device = logger_status.device_id, severity_level = logger_status.severity_level, message = logger_status.message)}",
     )
 
 
@@ -287,20 +298,48 @@ async def list_loggers(current_user: User_Pydantic = Depends(get_current_active_
 # Monitoring stuff
 
 
-@app.post("/app-monitoring/{app_id}")
-async def create_monitoring(app_name: str, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+@app.post("/app-mon/{app_id}")
+async def create_monitoring(monitoring_config: MonitoringConfig, app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
     user_obj = await User.get(id=current_user.id)
-    monitoring_app = await Monitoring.create(name=app_name,
+    monitoring_app = await Monitoring.create(name=monitoring_config.app_name,
                                              user=user_obj,
                                              uuid=app_id)
 
     raise HTTPException(
         status_code=status.HTTP_201_CREATED,
-        detail="Monitoring app created",
+        detail=f"Monitoring app created: {dict(name = monitoring_app.name)}",
     )
 
 
-@app.get("/app-monitoring-all")
+@app.delete("/app-delete/{app_id}")
+async def delete_app(app_id: UUID, current_user: User_Pydantic = Depends(get_current_active_user)):
+    user_obj = await User.get(id=current_user.id)
+    print("hello")
+    hc_app_exists = await HealthCheck.get(uuid=app_id).filter(user=user_obj).exists()
+    if hc_app_exists:
+        await HealthCheck.get(uuid=app_id).filter(user=user_obj).delete()
+        raise HTTPException(
+            status_code=status.HTTP_201_CREATED,
+            detail=f"Healthcheck app deleted",
+        )
+    monitoring_app_exists = await Monitoring.get(uuid=app_id).filter(user=user_obj).exists()
+    if monitoring_app_exists:
+        await Monitoring.get(uuid=app_id).filter(user=user_obj).delete()
+        raise HTTPException(
+            status_code=status.HTTP_201_CREATED,
+            detail=f"Monitoring app deleted",
+        )
+
+    logger_app_exists = await Logger.get(uuid=app_id).filter(user=user_obj).exists()
+    if logger_app_exists:
+        await Logger.get(uuid=app_id).filter(user=user_obj).delete()
+        raise HTTPException(
+            status_code=status.HTTP_201_CREATED,
+            detail=f"Logger app deleted",
+        )
+
+
+@app.get("/apps-mon")
 async def list_monitoring(current_user: User_Pydantic = Depends(get_current_active_user)):
     user_obj = await User.get(id=current_user.id)
     monitoring_apps = await Monitoring.all().filter(user=user_obj)
@@ -309,30 +348,60 @@ async def list_monitoring(current_user: User_Pydantic = Depends(get_current_acti
     return monitoring_apps
 
 
-@app.websocket("/app-monitoring-ws/{app_id}")
-async def monitoring_websocket(websocket: WebSocket, current_user: User_Pydantic = Depends(get_current_active_user)):
-    user_obj = await User.get(id=current_user.id)
-    monitoring_app = await Monitoring.get(uuid=app_id).filter(user=user_obj)
+@app.post("/app-mon-status/{app_id}")
+async def create_monitoring_status(monitoring_config: MonitoringStatusConfig, app_id: UUID):
+    monitoring_app = await Monitoring.get(uuid=app_id)
+    if monitoring_app is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Logger doesn't exist",
+        )
+    monitoring_statuses = await MonitoringStatus.all().filter(monitoring=monitoring_app).order_by("timestamp")
+    if (len(monitoring_statuses) > 10):
+        await monitoring_statuses[0].delete()
+    monitoring_status = await MonitoringStatus.create(cpu=monitoring_config.cpu,
+                                                      memory=monitoring_config.memory,
+                                                      monitoring=monitoring_app)
 
+    raise HTTPException(
+        status_code=status.HTTP_201_CREATED,
+        detail=f"Monitoring status added: {dict(cpu= monitoring_status.cpu, memory= monitoring_status.memory)}",
+    )
+
+
+@app.get("/app-mon-status/{app_id}")
+async def list_monitoring_statuses(app_id: UUID):
+    monitoring_app = await Monitoring.get(uuid=app_id)
     if monitoring_app is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Monitoring app doesn't exist",
         )
-    # await websocket.accept()
+    monitoring_statuses = await MonitoringStatus.all().filter(monitoring=monitoring_app).order_by("timestamp")
+    if len(monitoring_statuses) == 0:
+        return {}
+    times = [x.timestamp.strftime("%H:%M:%S")
+             for x in list(monitoring_statuses)]
+    cpus = [x.cpu for x in list(monitoring_statuses)]
+    memory = [x.memory for x in list(monitoring_statuses)]
+    data = [{"id": "cpu", "color": COLORS[0], "data": [
+        {"x": x, "y": y} for x, y in zip(times, cpus)]},
+        {"id": "memory", "color": COLORS[1], "data": [
+            {"x": x, "y": y} for x, y in zip(times, memory)]}]
+    return data
 
 
-@app.get("/")
+@ app.get("/")
 async def root():
     return Response(content="OK", media_type="text/plain")
 
 
 html = """
-<p>merge?</p> 
+<p>merge?</p>
 """
 
 
-@app.post("/email")
+@ app.post("/email")
 async def send_email(
     email: EmailSchema
 ) -> JSONResponse:
@@ -348,3 +417,4 @@ register_tortoise(
     generate_schemas=True,
     add_exception_handlers=True,
 )
+

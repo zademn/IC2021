@@ -15,6 +15,13 @@ import {
   Flex,
   Code,
 } from "@chakra-ui/react";
+import {
+  NumberInput,
+  NumberInputField,
+  NumberInputStepper,
+  NumberIncrementStepper,
+  NumberDecrementStepper,
+} from "@chakra-ui/react";
 
 import { FormControl, FormLabel } from "@chakra-ui/react";
 import { Input } from "@chakra-ui/react";
@@ -31,6 +38,7 @@ export default function ModalNewApp({ cookieToken }) {
   const [appType, setAppType] = useState("");
   const [appName, setAppName] = useState("My Application");
   const [period, setPeriod] = useState(5);
+  const [loggingThreshold, setLoggingThreshold] = useState(0);
   const periodInHours = {
     hours: Math.floor(period / 60),
     minutes: period % 60,
@@ -46,6 +54,9 @@ export default function ModalNewApp({ cookieToken }) {
 
   const changeAppType = (event) => {
     setAppType(event.target.value);
+  };
+  const changeThreshold = (val) => {
+    setLoggingThreshold(val);
   };
   const changeAppName = (event) => {
     setAppName(event.target.value);
@@ -76,12 +87,35 @@ export default function ModalNewApp({ cookieToken }) {
           }, 1000);
         });
     } else if (appType === "Logging") {
-      console.log(appName, appURLvalue.replace("app", "app-logging"));
       let loggerConfig = {
         app_name: appName,
+        severity_threshold: loggingThreshold,
       };
       axios
         .post(appURLvalue.replace("app", "app-logging"), loggerConfig, {
+          headers: {
+            Authorization: cookieToken,
+          },
+        })
+        .then((res) => {
+          setAppCreateStatus("green");
+          setTimeout(() => {
+            setAppCreateStatus("blue");
+          }, 1000);
+        })
+        .catch((err) => {
+          setAppCreateStatus("red");
+          setTimeout(() => {
+            setAppCreateStatus("blue");
+          }, 1000);
+        });
+    } else if (appType === "Monitoring") {
+      let monitoringConfig = {
+        app_name: appName,
+      };
+      console.log(appName, appURLvalue.replace("app", "app-mon"));
+      axios
+        .post(appURLvalue.replace("app", "app-mon"), monitoringConfig, {
           headers: {
             Authorization: cookieToken,
           },
@@ -289,7 +323,53 @@ Invoke-RestMethod ${appURLvalue}
                 </Tabs>
               </FormControl>
             ) : null}
-            {appType == "Monitoring" ? null : null}
+            {appType == "Monitoring" ? (
+              <FormControl mt={4}>
+                <FormLabel>
+                  Keep this check up by making POST requests to this url:
+                </FormLabel>
+                <Flex mb={2}>
+                  <Input
+                    value={appURLvalue.replace("app", "app-monitoring")}
+                    isReadOnly
+                    placeholder="Welcome"
+                  />
+                  <Button onClick={onCopy} ml={2}>
+                    {hasCopied ? "Copied" : "Copy"}
+                  </Button>
+                </Flex>
+                <FormLabel mt={4}>
+                  This monitoring app keeps track of different resources
+                </FormLabel>
+                <Tabs isFitted variant="enclosed" size="md">
+                  <TabList mb="1em">
+                    <Tab>Python</Tab>
+                  </TabList>
+                  <TabPanels>
+                    <TabPanel>
+                      <pre style={{ whiteSpace: "pre-wrap" }}>
+                        {`
+import psutil
+import time
+import requests
+import json
+url = "${appURLvalue.replace("app", "app-monitoring")}"
+while True:
+    cpu = psutil.cpu_percent(interval=None)
+    memory = psutil.virtual_memory().percent
+    print(memory)
+    time.sleep(2)
+    r = requests.post(url, data=json.dumps({"cpu": cpu, 'memory': memory}), headers={'accept': 'application/json',
+                                                                                     'Content-Type': 'application/json'})
+    print(r.json)
+
+                        `}
+                      </pre>
+                    </TabPanel>
+                  </TabPanels>
+                </Tabs>
+              </FormControl>
+            ) : null}
             {appType == "Logging" ? (
               <FormControl mt={4}>
                 <FormLabel>
@@ -305,6 +385,21 @@ Invoke-RestMethod ${appURLvalue}
                     {hasCopied ? "Copied" : "Copy"}
                   </Button>
                 </Flex>
+                <FormLabel mt={4}>
+                  Notify me when the severity is greater than or equal to (0=None):
+                </FormLabel>
+                <NumberInput
+                  defaultValue={0}
+                  min={0}
+                  max={10}
+                  onChange={(val) => changeThreshold(val)}
+                >
+                  <NumberInputField />
+                  <NumberInputStepper>
+                    <NumberIncrementStepper />
+                    <NumberDecrementStepper />
+                  </NumberInputStepper>
+                </NumberInput>
                 <FormLabel mt={4}>Example of JSON body:</FormLabel>
                 <FormLabel>
                   The device_id can be anything that identifies the device, such
@@ -312,7 +407,7 @@ Invoke-RestMethod ${appURLvalue}
                 </FormLabel>
                 <FormLabel>
                   Severity is the severity level of the log, usually between 1
-                  and 7
+                  and 10
                 </FormLabel>
                 <FormLabel>
                   The message can be anything related to this event

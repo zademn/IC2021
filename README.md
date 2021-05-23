@@ -49,3 +49,4 @@ _temporary architecture_
 
 ## logging
 ![](images/example2.png)
+

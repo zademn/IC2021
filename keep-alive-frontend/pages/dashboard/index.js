@@ -1,7 +1,8 @@
 import Header from "../../components/header";
 import DataTable from "../../components/DataTable";
 import ModalNewApp from "../../components/modalNewApp.js";
-import { Box, Button, Text, Center } from "@chakra-ui/react";
+//import PlotMon from "../../components/plot.js";
+import { Box, Button, Text, Center, AlertDialog } from "@chakra-ui/react";
 import Link from "next/link";
 import { Context } from "../../context";
 import { useContext, useEffect, useState } from "react";
@@ -27,6 +28,9 @@ import {
   MenuGroup,
   MenuDivider,
 } from "@chakra-ui/react";
+import useSWR, { mutate } from "swr";
+import PlotMon from "../../components/plot";
+import AlertDelete from "../../components/AlertDelete";
 
 function getExpiryDateToken(token) {
   // Split token at .
@@ -48,6 +52,15 @@ function getUserEmail(token) {
     return "";
   }
 }
+
+const fetcher = (url, token) =>
+  axios
+    .get(url, {
+      headers: {
+        Authorization: token,
+      },
+    })
+    .then((res) => res.data);
 
 export default function Dashboard() {
   const [cookie, setCookie] = useCookies(["token"]);
@@ -100,7 +113,7 @@ export default function Dashboard() {
       })
       .then((res) => {
         setLogAppsStatuses(null);
-        setMonAppsStatuses(null);
+        setAppIdMon(null);
         setHcAppsStatuses(res.data);
       })
       .catch((err) => {});
@@ -109,6 +122,9 @@ export default function Dashboard() {
   // -------------------------------------------- get monitoring
 
   const [monApps, setMonApps] = useState(null);
+  const [appIdMon, setAppIdMon] = useState(null);
+
+  // Get Monitoring apps
   useEffect(() => {
     axios
       .get(`${process.env.backend}/apps-mon`, {
@@ -123,21 +139,23 @@ export default function Dashboard() {
       })
       .catch((err) => {});
   }, [fetchApps]);
-  const [monAppsStatuses, setMonAppsStatuses] = useState(null);
+
+  // Get monitoring app data
   function getMonStatuses(app_id) {
-    axios
-      .get(`${process.env.backend}/apps-mon-status/${app_id}`, {
-        headers: {
-          Authorization: cookie.token,
-        },
-      })
-      .then((res) => {
-        setHcAppsStatuses(null);
-        setLogAppsStatuses(null);
-        setMonAppsStatuses(res.data);
-      })
-      .catch((err) => {});
+    setHcAppsStatuses(null);
+    setLogAppsStatuses(null);
+    setAppIdMon(app_id);
   }
+  const { data: monAppsStatuses, error } = useSWR(
+    appIdMon
+      ? [`${process.env.backend}/app-mon-status/${appIdMon}`, cookie.token]
+      : null,
+    fetcher,
+    {
+      refreshInterval: 1000,
+    }
+  );
+
   // -------------------------------------------- get logging
 
   const [logApps, setLogApps] = useState(null);
@@ -160,8 +178,8 @@ export default function Dashboard() {
         },
       })
       .then((res) => {
-        setMonAppsStatuses(null);
         setHcAppsStatuses(null);
+        setAppIdMon(null);
         setLogAppsStatuses(res.data);
       })
       .catch((err) => {});
@@ -254,9 +272,23 @@ export default function Dashboard() {
                 </MenuGroup>
                 <MenuDivider />
                 <MenuGroup title="Monitoring">
-                  {monApps !== null
+                  {monApps !== null &&
+                  JSON.stringify(monApps) !== JSON.stringify({})
                     ? monApps.map((monApp) => {
-                        return <MenuItem>{monApp.name}</MenuItem>;
+                        return (
+                          <MenuItem
+                            onClick={() => {
+                              getMonStatuses(monApp.uuid);
+                              setCurrentSelectedApp({
+                                app_type: "Monitoring",
+                                name: monApp.name,
+                                id: monApp.uuid,
+                              });
+                            }}
+                          >
+                            {monApp.name}
+                          </MenuItem>
+                        );
                       })
                     : ""}
                 </MenuGroup>
@@ -289,14 +321,38 @@ export default function Dashboard() {
         {currentSelectedApp === null ? null : (
           <Box mt="10">
             <Text fontWeight="bold" fontSize="xl">
-              {currentSelectedApp?.name}{" "}
+              {currentSelectedApp?.name}
+              <Box as="span" ml={2}>
+                {currentSelectedApp?.id && (
+                  <AlertDelete
+                    app_id={currentSelectedApp.id}
+                    setCurrentSelectedApp={setCurrentSelectedApp}
+                  />
+                )}
+              </Box>
             </Text>
-            <Text fontWeight="bold" fontSize="xl" bg="blue.800">
+            <Text fontWeight="bold" fontSize="xl" bg="blue.800" mt={2}>
               {currentSelectedApp.app_type === "HealthCheck" &&
                 `${process.env.backend}/app/${currentSelectedApp?.id}`}
               {currentSelectedApp.app_type === "Logging" &&
                 `${process.env.backend}/app-logging-status/${currentSelectedApp?.id}`}
+              {currentSelectedApp.app_type === "Monitoring" &&
+                `${process.env.backend}/app-mon-status/${currentSelectedApp?.id}`}
             </Text>
+            {currentSelectedApp.app_type === "Logging" && (
+              <code>{`Make a post request with this body to the link
+              {
+                device_id: "string",
+                severity_level: int,
+                message: "string"
+              }
+              `}</code>
+            )}
+            {currentSelectedApp.app_type === "Monitoring" && (
+              <code>{`Make a continous post request with this body to the link
+              {"cpu": cpu, 'memory': memory}
+              `}</code>
+            )}
           </Box>
         )}
 
@@ -354,6 +410,13 @@ export default function Dashboard() {
               };
             })}
           />
+        ) : null}
+        {/* {error ? <div>failed to load</div> : null}
+        {!monAppsStatuses ? <div>Loading...</div> : null} */}
+        {monAppsStatuses ? (
+          <div>
+            <PlotMon data={monAppsStatuses} />
+          </div>
         ) : null}
       </VStack>
     </Box>

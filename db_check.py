@@ -1,6 +1,7 @@
 import asyncio
-from models import HealthCheckStatus, HealthCheck, User
+from models import HealthCheckStatus, HealthCheck, Logger, LoggerStatus, User
 from datetime import datetime, timedelta
+from mail import simple_send
 
 
 async def check_db_every_x_seconds(timeout, stuff):
@@ -23,9 +24,13 @@ async def clean_late_entries():
                 curr_time = datetime.now()
                 # if the check is late ...
                 if curr_time > last_entry.next_receive.replace(tzinfo=None):
-                    # TODO: send mail
                     print(
                         f"Check is late for {user.email} with app {health_check.name}, we should've received a check at {last_entry.next_receive.replace(tzinfo=None)}")
+
+                    await simple_send([user.email],
+                                      f"{user.email}, your healthcheck for <b>{health_check.name}</b> is late!, we should've received a check at {last_entry.next_receive.replace(tzinfo=None)}.<br>Please investigate!",
+                                      subject=f"{health_check.name} health check is late.")
+
                     # in this case, wait for the next one
                     next_receive = curr_time + \
                         timedelta(minutes=health_check.period +

@@ -92,7 +92,7 @@ class HealthCheckStatus(models.Model):
 
     # Relations
     health_check: fields.ForeignKeyRelation[HealthCheck] = fields.ForeignKeyField(
-        "models.HealthCheck")
+        "models.HealthCheck", on_delete='CASCADE')
 
 
 HealthCheckStatus_Pydantic = pydantic_model_creator(
@@ -116,15 +116,31 @@ Monitoring_Pydantic = pydantic_model_creator(
     Monitoring, name="Monitoring", exclude=('created_at', 'modified_at'))
 
 
+class MonitoringStatus(models.Model):
+    # Data stuff
+    id = fields.IntField(pk=True)
+    timestamp = fields.DatetimeField(auto_now_add=True)
+    cpu = fields.FloatField()
+    memory = fields.FloatField()
+    # Relations
+    monitoring: fields.ForeignKeyRelation[Monitoring] = fields.ForeignKeyField(
+        "models.Monitoring", on_delete='CASCADE')
+
+
+MonitoringStatus_Pydantic = pydantic_model_creator(
+    MonitoringStatus, name="MonitoringStatus")
+
+
 class Logger(models.Model):
     '''
-    Logger class
+    Logger model
     '''
     id = fields.IntField(pk=True)
     uuid = fields.UUIDField()
     name = fields.CharField(max_length=128, unique=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     modified_at = fields.DatetimeField(auto_now=True)
+    severity_threshold = fields.IntField()
 
     # Relations
     user: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
@@ -148,7 +164,7 @@ class LoggerStatus(models.Model):
 
     # Relations
     logger: fields.ForeignKeyRelation[Logger] = fields.ForeignKeyField(
-        "models.Logger")
+        "models.Logger", on_delete='CASCADE')
 
 
 LoggerStatus_Pydantic = pydantic_model_creator(
@@ -169,9 +185,19 @@ class LoggerStatusConfig(BaseModel):
 
 class LoggerConfig(BaseModel):
     app_name: str
+    severity_threshold: int
 
 
 class HealthCheckConfig(BaseModel):
     app_name: str
     period: int
     grace: int
+
+
+class MonitoringConfig(BaseModel):
+    app_name: str
+
+
+class MonitoringStatusConfig(BaseModel):
+    cpu: float
+    memory: float
