@@ -183,7 +183,7 @@ async def ping_app(app_id: UUID):
     hc_status = await HealthCheckStatus.filter(health_check_id=health_check.id)
     last_entry = hc_status[len(hc_status)-1]
 
-    curr_time = datetime.now()
+    curr_time = datetime.datetime.now()
     if curr_time < last_entry.next_receive.replace(tzinfo=None):
         last_entry.done = True
         await last_entry.save()
